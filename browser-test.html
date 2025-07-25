@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DárekList Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>DárekList Test</h1>
+    <div id="status"></div>
+    <div id="result"></div>
+    
+    <script>
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
+            'https://dkqcgmwqugsvlobzekwo.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcWNnbXdxdWdzdmxvYnpla3dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzNTg5OTcsImV4cCI6MjA2NTkzNDk5N30.FwT2G_SE-YDgvl8MDRFvA4EcfeujCcTIS5AgouiCXtE'
+        );
+        
+        async function testApp() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            
+            statusDiv.innerHTML = 'Testování...';
+            
+            try {
+                // Test přihlášení
+                statusDiv.innerHTML = 'Přihlašování...';
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email: 'vondracek.ivan@gmail.com',
+                    password: 'navi2633'
+                });
+                
+                if (authError) {
+                    throw new Error('Auth: ' + authError.message);
+                }
+                
+                statusDiv.innerHTML = '✅ Přihlášen jako: ' + authData.user.email;
+                
+                // Test vytvoření seznamu
+                statusDiv.innerHTML = 'Vytváření seznamu...';
+                const { data: wishlistData, error: wishlistError } = await supabaseClient
+                    .from('wishlists')
+                    .insert({
+                        user_id: authData.user.id,
+                        title: 'Browser Test Seznam',
+                        description: 'Test z prohlížeče',
+                        is_public: false
+                    })
+                    .select()
+                    .single();
+                
+                if (wishlistError) {
+                    throw new Error('Wishlist: ' + wishlistError.message);
+                }
+                
+                statusDiv.innerHTML = '✅ Seznam vytvořen!';
+                resultDiv.innerHTML = '<pre>' + JSON.stringify(wishlistData, null, 2) + '</pre>';
+                
+                // Test přidání dárku
+                const { data: giftData, error: giftError } = await supabaseClient
+                    .from('gifts')
+                    .insert({
+                        wishlist_id: wishlistData.id,
+                        title: 'Test Dárek',
+                        description: 'Test dárek z prohlížeče',
+                        price: 1000,
+                        priority: 'medium'
+                    })
+                    .select()
+                    .single();
+                
+                if (giftError) {
+                    throw new Error('Gift: ' + giftError.message);
+                }
+                
+                statusDiv.innerHTML = '🎉 Vše funguje! Seznam i dárek vytvořeny!';
+                resultDiv.innerHTML += '<h3>Dárek:</h3><pre>' + JSON.stringify(giftData, null, 2) + '</pre>';
+                
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Chyba: ' + error.message;
+                resultDiv.innerHTML = '<pre>' + error.stack + '</pre>';
+            }
+        }
+        
+        // Spustit test automaticky
+        testApp();
+    </script>
+</body>
+</html>

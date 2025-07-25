@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google OAuth Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; border: none; border-radius: 5px; }
+        .btn-secondary { background: #6c757d; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Google OAuth Test - DárekList</h1>
+    
+    <div id="status" class="status info">
+        Připraveno k testování...
+    </div>
+    
+    <div id="controls">
+        <button id="testGoogle" class="btn-primary">🔑 Test Google přihlášení</button>
+        <button id="checkSession" class="btn-secondary">👤 Zkontrolovat session</button>
+        <button id="signOut" class="btn-secondary">🚪 Odhlásit se</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+        <h3>🧪 Postup testování:</h3>
+        <ol>
+            <li><strong>Klikněte na "Test Google přihlášení"</strong></li>
+            <li>Budete přesměrováni na Google</li>
+            <li>Po ověření by vás mělo vrátit zpět</li>
+            <li>Zkontrolujte, zda jste přihlášeni pomocí "Zkontrolovat session"</li>
+        </ol>
+        
+        <h3>📋 Co testujeme:</h3>
+        <ul>
+            <li>✅ Google OAuth flow</li>
+            <li>✅ Redirect handling po přihlášení</li>
+            <li>✅ Session persistence</li>
+            <li>✅ AuthCallback stránka</li>
+        </ul>
+    </div>
+
+    <script>
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
+            'https://dkqcgmwqugsvlobzekwo.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRrcWNnbXdxdWdzdmxvYnpla3dvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzNTg5OTcsImV4cCI6MjA2NTkzNDk5N30.FwT2G_SE-YDgvl8MDRFvA4EcfeujCcTIS5AgouiCXtE'
+        );
+        
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        
+        function updateStatus(message, type = 'info') {
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+        
+        function addResult(message) {
+            resultDiv.innerHTML += '<div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">' + message + '</div>';
+        }
+        
+        // Test Google přihlášení
+        document.getElementById('testGoogle').addEventListener('click', async () => {
+            try {
+                updateStatus('🔄 Inicializace Google OAuth...', 'info');
+                
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: `${window.location.origin}/auth/callback?returnTo=/wishlists`,
+                    },
+                });
+                
+                if (error) {
+                    updateStatus('❌ Chyba: ' + error.message, 'error');
+                    addResult('❌ Google OAuth error: ' + error.message);
+                } else {
+                    updateStatus('🔄 Přesměrování na Google...', 'info');
+                    addResult('✅ Google OAuth inicializován, přesměrování...');
+                }
+            } catch (err) {
+                updateStatus('❌ Neočekávaná chyba: ' + err.message, 'error');
+                addResult('❌ Unexpected error: ' + err.message);
+            }
+        });
+        
+        // Zkontrolovat session
+        document.getElementById('checkSession').addEventListener('click', async () => {
+            try {
+                updateStatus('🔄 Kontrola session...', 'info');
+                
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) {
+                    updateStatus('❌ Chyba při kontrole session: ' + error.message, 'error');
+                    addResult('❌ Session check error: ' + error.message);
+                } else if (session?.user) {
+                    updateStatus('✅ Přihlášen jako: ' + session.user.email, 'success');
+                    addResult('✅ Session aktivní: ' + session.user.email + ' (ID: ' + session.user.id + ')');
+                } else {
+                    updateStatus('👻 Nepřihlášen', 'info');
+                    addResult('👻 Žádná aktivní session');
+                }
+            } catch (err) {
+                updateStatus('❌ Chyba: ' + err.message, 'error');
+                addResult('❌ Error: ' + err.message);
+            }
+        });
+        
+        // Odhlásit se
+        document.getElementById('signOut').addEventListener('click', async () => {
+            try {
+                updateStatus('🔄 Odhlašování...', 'info');
+                
+                const { error } = await supabaseClient.auth.signOut();
+                
+                if (error) {
+                    updateStatus('❌ Chyba při odhlašování: ' + error.message, 'error');
+                } else {
+                    updateStatus('✅ Úspěšně odhlášen', 'success');
+                    addResult('✅ Úspěšně odhlášen');
+                }
+            } catch (err) {
+                updateStatus('❌ Chyba: ' + err.message, 'error');
+            }
+        });
+        
+        // Auto-check session na načtení stránky
+        window.addEventListener('load', () => {
+            document.getElementById('checkSession').click();
+        });
+        
+        // Listen for auth changes
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            addResult(`🔔 Auth event: ${event} - User: ${session?.user?.email || 'None'}`);
+        });
+    </script>
+</body>
+</html>
