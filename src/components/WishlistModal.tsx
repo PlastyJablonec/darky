@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { ImageUpload } from './ImageUpload'
+import { resizeImage, validateImageFile } from '@/utils/imageUtils'
 import type { Database } from '@/types'
 
 type Wishlist = Database['public']['Tables']['wishlists']['Row']
@@ -33,6 +35,7 @@ export function WishlistModal({
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (initialData) {
@@ -65,6 +68,34 @@ export function WishlistModal({
     }))
     
     if (error) setError('')
+  }
+
+  const handleImageSelect = async (file: File) => {
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      setError(validation.error || 'Neplatný obrázek')
+      return
+    }
+
+    try {
+      setSelectedFile(file)
+      // Zmenši obrázek a převeď na base64
+      const resizedImage = await resizeImage(file, 800, 600, 0.8)
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: resizedImage
+      }))
+    } catch (err) {
+      setError('Chyba při zpracování obrázku')
+    }
+  }
+
+  const handleImageRemove = () => {
+    setSelectedFile(null)
+    setFormData(prev => ({
+      ...prev,
+      imageUrl: ''
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,20 +177,29 @@ export function WishlistModal({
           </div>
 
           <div>
-            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-              URL obrázku (volitelné)
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Obrázek (volitelné)
             </label>
-            <input
-              type="url"
-              id="imageUrl"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
-              className="input"
-              placeholder="https://example.com/image.jpg"
+            <ImageUpload
+              onImageSelect={handleImageSelect}
+              onImageRemove={handleImageRemove}
+              currentImageUrl={formData.imageUrl}
+              placeholder="Nahrajte obrázek nebo zadejte URL"
             />
-            <div className="text-xs text-gray-500 mt-1">
-              Zadejte URL obrázku pro váš seznam přání
+            
+            <div className="mt-2">
+              <label htmlFor="imageUrl" className="block text-xs text-gray-600 mb-1">
+                Nebo zadejte URL obrázku:
+              </label>
+              <input
+                type="url"
+                id="imageUrl"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleChange}
+                className="input text-sm"
+                placeholder="https://example.com/image.jpg"
+              />
             </div>
           </div>
 

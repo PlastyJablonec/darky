@@ -171,7 +171,7 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
         </div>
         
         {wishlist.image_url && (
-          <div className="px-6" onClick={(e) => e.preventDefault()}>
+          <div className="px-6">
             <div className="relative">
               <OptimizedImage
                 src={wishlist.image_url}
@@ -179,7 +179,7 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
                 className="w-full h-32 rounded-md"
                 aspectRatio={2.5}
                 objectFit="cover"
-                clickable={true}
+                clickable={false}
               />
             </div>
           </div>

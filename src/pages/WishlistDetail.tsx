@@ -227,12 +227,12 @@ export function WishlistDetail() {
         </div>
 
         {wishlist.image_url && (
-          <div className="relative h-64 rounded-lg overflow-hidden">
+          <div className="relative h-32 rounded-lg overflow-hidden">
             <OptimizedImage
               src={wishlist.image_url}
               alt={wishlist.title}
               className="w-full h-full"
-              aspectRatio={2.5}
+              aspectRatio={3}
               objectFit="cover"
               clickable={true}
             />
