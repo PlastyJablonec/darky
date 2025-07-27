@@ -89,12 +89,12 @@ export function SharedWithMe() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation">
                 <ArrowLeft className="h-6 w-6 text-gray-600" />
               </Link>
-              <Share2 className="h-8 w-8 text-primary-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+              <Share2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
             </div>
           </div>
           
@@ -117,12 +117,12 @@ export function SharedWithMe() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation">
                 <ArrowLeft className="h-6 w-6 text-gray-600" />
               </Link>
-              <Share2 className="h-8 w-8 text-primary-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+              <Share2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
             </div>
           </div>
 
@@ -149,19 +149,19 @@ export function SharedWithMe() {
     <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation">
               <ArrowLeft className="h-6 w-6 text-gray-600" />
             </Link>
-            <Share2 className="h-8 w-8 text-primary-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+            <Share2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
           </div>
           <div className="text-sm text-gray-500">
             {sharedLists.length} {sharedLists.length === 1 ? 'seznam' : 'seznamů'}
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {sharedLists.map((shared) => {
             return (
               <div key={shared.id} className="bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">

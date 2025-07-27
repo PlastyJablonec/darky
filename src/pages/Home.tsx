@@ -29,18 +29,18 @@ export function Home() {
           </div>
         </header>
 
-        <main className="py-16">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold text-gray-900 mb-6">
+        <main className="py-8 sm:py-16">
+          <div className="text-center mb-8 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 px-4">
               Sdílejte své přání
               <br />
               <span className="text-primary-600">jednoduše a elegantně</span>
             </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
               Vytvářejte seznamy přání, sdílejte je s přáteli a rodinou, 
               a koordinujte dárky pro každou příležitost.
             </p>
-            <div className="space-x-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 px-4">
               <Link
                 to="/register"
                 className="btn-primary text-lg px-8 py-3"
@@ -50,8 +50,8 @@ export function Home() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            <div className="text-center p-8 bg-white rounded-lg shadow-sm">
+          <div className="grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-3 mb-12 sm:mb-16">
+            <div className="text-center p-6 sm:p-8 bg-white rounded-lg shadow-sm">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Gift className="h-8 w-8 text-primary-600" />
               </div>
@@ -64,7 +64,7 @@ export function Home() {
               </p>
             </div>
 
-            <div className="text-center p-8 bg-white rounded-lg shadow-sm">
+            <div className="text-center p-6 sm:p-8 bg-white rounded-lg shadow-sm">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Share2 className="h-8 w-8 text-primary-600" />
               </div>
@@ -77,7 +77,7 @@ export function Home() {
               </p>
             </div>
 
-            <div className="text-center p-8 bg-white rounded-lg shadow-sm">
+            <div className="text-center p-6 sm:p-8 bg-white rounded-lg shadow-sm">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Heart className="h-8 w-8 text-primary-600" />
               </div>
@@ -91,8 +91,8 @@ export function Home() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 md:p-12">
+            <div className="grid gap-8 sm:gap-12 grid-cols-1 md:grid-cols-2 items-center">
               <div>
                 <h3 className="text-3xl font-bold text-gray-900 mb-4">
                   Perfektní pro každou příležitost

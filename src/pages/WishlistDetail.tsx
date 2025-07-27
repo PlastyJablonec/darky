@@ -168,15 +168,15 @@ export function WishlistDetail() {
       <div className="space-y-6">
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Link
               to="/wishlists"
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Link>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{wishlist.title}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{wishlist.title}</h1>
               {wishlist.description && (
                 <p className="text-gray-600 mt-1">{wishlist.description}</p>
               )}
@@ -203,7 +203,7 @@ export function WishlistDetail() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
             {wishlist.is_public && wishlist.share_id && (
               <ShareButtons
                 wishlistTitle={wishlist.title}
@@ -259,7 +259,7 @@ export function WishlistDetail() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {gifts.map((gift) => (
               <GiftCard
                 key={gift.id}

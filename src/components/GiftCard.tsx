@@ -107,7 +107,7 @@ export function GiftCard({
           <OptimizedImage
             src={gift.image_url}
             alt={gift.title}
-            className="w-full h-48 rounded-t-lg"
+            className="w-full h-40 sm:h-48 rounded-t-lg"
             aspectRatio={1.5}
             objectFit="cover"
             clickable={true}

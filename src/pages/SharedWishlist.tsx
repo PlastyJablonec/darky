@@ -160,7 +160,7 @@ export function SharedWishlist() {
                 <Heart className="h-6 w-6 text-primary-600" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{wishlist.title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{wishlist.title}</h1>
                 {wishlist.description && (
                   <p className="text-gray-600 mt-1">{wishlist.description}</p>
                 )}
@@ -177,7 +177,7 @@ export function SharedWishlist() {
           </div>
 
           {wishlist.image_url && (
-            <div className="relative h-64 rounded-lg overflow-hidden mx-auto max-w-2xl">
+            <div className="relative h-48 sm:h-64 rounded-lg overflow-hidden mx-auto max-w-2xl">
               <OptimizedImage
                 src={wishlist.image_url}
                 alt={wishlist.title}
@@ -217,7 +217,7 @@ export function SharedWishlist() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {gifts.map((gift) => (
                 <GiftCard
                   key={gift.id}
