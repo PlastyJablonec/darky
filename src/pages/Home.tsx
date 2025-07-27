@@ -46,12 +46,6 @@ export function Home() {
               >
                 Začít zdarma
               </Link>
-              <Link
-                to="/demo"
-                className="btn-outline text-lg px-8 py-3"
-              >
-                Vyzkoušet demo
-              </Link>
             </div>
           </div>
 
