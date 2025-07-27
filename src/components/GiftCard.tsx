@@ -100,7 +100,7 @@ export function GiftCard({
 
   return (
     <div className={`card hover:shadow-md transition-all duration-200 ${
-      gift.is_reserved ? 'opacity-75 bg-gray-50' : ''
+      gift.is_reserved && !isOwner ? 'opacity-75 bg-gray-50' : ''
     }`}>
       {gift.image_url && (
         <div className="relative">
@@ -112,7 +112,7 @@ export function GiftCard({
             objectFit="cover"
             clickable={true}
           />
-          {gift.is_reserved && (
+          {gift.is_reserved && !isOwner && (
             <div className="absolute inset-0 bg-black bg-opacity-30 rounded-t-lg flex items-center justify-center">
               <span className="bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
                 Rezervováno
@@ -264,7 +264,7 @@ export function GiftCard({
         </div>
       </div>
       
-      {gift.is_reserved && (
+      {gift.is_reserved && !isOwner && (
         <div className="card-footer">
           <div className="text-xs text-gray-500">
             Rezervováno {gift.reserved_at && new Date(gift.reserved_at).toLocaleDateString('cs-CZ')}
