@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { Gift, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
+import { Footer } from '@/components/Footer'
 
 export function Register() {
   const { signUp, signInWithGoogle, loading } = useAuth()
@@ -76,16 +77,20 @@ export function Register() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        </div>
+        <Footer />
       </div>
     )
   }
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Gift className="h-8 w-8 text-green-600" />
@@ -104,14 +109,18 @@ export function Register() {
               Přejít k přihlášení
             </Link>
           </div>
+          </div>
         </div>
+        
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex items-center justify-center">
           <Gift className="h-12 w-12 text-primary-600" />
         </div>
@@ -294,7 +303,10 @@ export function Register() {
             </div>
           </form>
         </div>
+        </div>
       </div>
+      
+      <Footer />
     </div>
   )
 }
