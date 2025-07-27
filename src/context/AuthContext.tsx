@@ -112,10 +112,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       ? new URLSearchParams(window.location.search).get('returnTo') || '/wishlists'
       : window.location.pathname + window.location.search
 
+    // Pro lokální vývoj použij produkční URL ale označit že chceme návrat na localhost
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const redirectOrigin = isLocalhost 
+      ? 'https://darky-seznam.vercel.app' 
+      : window.location.origin
+
+    // Přidat dev flag pro localhost
+    const devFlag = isLocalhost ? '&dev=true' : ''
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
+        redirectTo: `${redirectOrigin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}${devFlag}`,
       },
     })
 
