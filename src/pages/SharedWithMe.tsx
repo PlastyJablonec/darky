@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, Heart, User, Clock, Share2 } from 'lucide-react'
+import { Eye, Heart, User, Clock, Share2, ArrowLeft } from 'lucide-react'
 import { OptimizedImage } from '@/components/OptimizedImage'
 import { useAuth } from '@/context/AuthContext'
 import { ShareService } from '@/services/shareService'
@@ -88,9 +88,14 @@ export function SharedWithMe() {
     return (
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          <div className="flex items-center space-x-3">
-            <Share2 className="h-8 w-8 text-primary-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <ArrowLeft className="h-6 w-6 text-gray-600" />
+              </Link>
+              <Share2 className="h-8 w-8 text-primary-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+            </div>
           </div>
           
           <div className="animate-pulse space-y-4">
@@ -111,9 +116,14 @@ export function SharedWithMe() {
     return (
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          <div className="flex items-center space-x-3">
-            <Share2 className="h-8 w-8 text-primary-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <ArrowLeft className="h-6 w-6 text-gray-600" />
+              </Link>
+              <Share2 className="h-8 w-8 text-primary-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
+            </div>
           </div>
 
           <div className="text-center py-12">
@@ -140,6 +150,9 @@ export function SharedWithMe() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
+            <Link to="/wishlists" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <ArrowLeft className="h-6 w-6 text-gray-600" />
+            </Link>
             <Share2 className="h-8 w-8 text-primary-600" />
             <h1 className="text-3xl font-bold text-gray-900">Sdíleno se mnou</h1>
           </div>
