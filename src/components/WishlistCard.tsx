@@ -19,22 +19,24 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
   const [showShareDialog, setShowShareDialog] = useState(false)
 
   return (
-    <Link to={`/wishlists/${wishlist.id}`} className="block">
-      <div className="card hover:shadow-md transition-shadow duration-200 cursor-pointer">
+    <>
+      <div className="card hover:shadow-md transition-shadow duration-200">
         
         <div className="card-header">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="block hover:text-primary-600 transition-colors">
+              <Link to={`/wishlists/${wishlist.id}`} className="block hover:text-primary-600 transition-colors cursor-pointer">
                 <h3 className="text-lg font-semibold text-gray-900 mb-1">
                   {wishlist.title}
                 </h3>
-              </div>
+              </Link>
               
               {wishlist.description && (
-                <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                  {wishlist.description}
-                </p>
+                <Link to={`/wishlists/${wishlist.id}`} className="block cursor-pointer">
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-2 hover:text-gray-800 transition-colors">
+                    {wishlist.description}
+                  </p>
+                </Link>
               )}
               
               <div className="flex items-center space-x-2">
@@ -179,31 +181,31 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
                 className="w-full h-32 rounded-md"
                 aspectRatio={2.5}
                 objectFit="cover"
-                clickable={false}
+                clickable={true}
               />
             </div>
           </div>
         )}
         
-        <div className="card-footer">
-          <div className="text-xs text-gray-500">
-            Vytvořeno {new Date(wishlist.created_at).toLocaleDateString('cs-CZ')}
+        <Link to={`/wishlists/${wishlist.id}`} className="block cursor-pointer">
+          <div className="card-footer">
+            <div className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              Vytvořeno {new Date(wishlist.created_at).toLocaleDateString('cs-CZ')}
+            </div>
           </div>
-        </div>
+        </Link>
       </div>
       
       {/* Share Dialog */}
       {wishlist.is_public && (
-        <div onClick={(e) => e.preventDefault()}>
-          <ShareButtons
-            wishlistTitle={wishlist.title}
-            shareUrl={wishlist.share_id ? `${window.location.origin}/shared/${wishlist.share_id}` : window.location.href}
-            onShare={(platform) => console.log('Sdíleno na:', platform)}
-            showDialog={showShareDialog}
-            onCloseDialog={() => setShowShareDialog(false)}
-          />
-        </div>
+        <ShareButtons
+          wishlistTitle={wishlist.title}
+          shareUrl={wishlist.share_id ? `${window.location.origin}/shared/${wishlist.share_id}` : window.location.href}
+          onShare={(platform) => console.log('Sdíleno na:', platform)}
+          showDialog={showShareDialog}
+          onCloseDialog={() => setShowShareDialog(false)}
+        />
       )}
-    </Link>
+    </>
   )
 }
