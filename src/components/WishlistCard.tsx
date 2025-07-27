@@ -171,7 +171,7 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
         </div>
         
         {wishlist.image_url && (
-          <div className="px-6">
+          <div className="px-6" onClick={(e) => e.preventDefault()}>
             <div className="relative">
               <OptimizedImage
                 src={wishlist.image_url}

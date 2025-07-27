@@ -4,6 +4,7 @@ import { Menu, Transition } from '@headlessui/react'
 import { useAuth } from '@/context/AuthContext'
 import { giftService } from '@/services/giftService'
 import { AuthDialog } from './AuthDialog'
+import { OptimizedImage } from './OptimizedImage'
 import type { Database } from '@/types'
 
 type Gift = Database['public']['Tables']['gifts']['Row']
@@ -26,17 +27,12 @@ export function GiftCard({
   onUnreserve 
 }: GiftCardProps) {
   const { user } = useAuth()
-  const [imageError, setImageError] = useState(false)
   const [showAuthDialog, setShowAuthDialog] = useState(false)
   const [authAction, setAuthAction] = useState('')
 
   const isReservedByCurrentUser = gift.reserved_by === user?.id
   const canReserve = !isOwner && !gift.is_reserved
   const canUnreserve = !isOwner && isReservedByCurrentUser
-
-  const handleImageError = () => {
-    setImageError(true)
-  }
 
   const formatPrice = (price: number | null, currency: string) => {
     return giftService.formatPrice(price, currency)
@@ -106,13 +102,15 @@ export function GiftCard({
     <div className={`card hover:shadow-md transition-all duration-200 ${
       gift.is_reserved ? 'opacity-75 bg-gray-50' : ''
     }`}>
-      {gift.image_url && !imageError && (
+      {gift.image_url && (
         <div className="relative">
-          <img
+          <OptimizedImage
             src={gift.image_url}
             alt={gift.title}
-            className="w-full h-48 object-cover rounded-t-lg"
-            onError={handleImageError}
+            className="w-full h-48 rounded-t-lg"
+            aspectRatio={1.5}
+            objectFit="cover"
+            clickable={true}
           />
           {gift.is_reserved && (
             <div className="absolute inset-0 bg-black bg-opacity-30 rounded-t-lg flex items-center justify-center">
