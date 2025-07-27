@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -9,9 +10,18 @@ import { WishlistDetail } from '@/pages/WishlistDetail'
 import { SharedWishlist } from '@/pages/SharedWishlist'
 import { SharedWithMe } from '@/pages/SharedWithMe'
 import { AuthCallback } from '@/pages/AuthCallback'
+import { runProductionDiagnostics } from '@/utils/debug'
 
 function App() {
   const { loading } = useAuth()
+
+  // Spusť diagnostiku na produkci
+  useEffect(() => {
+    if (window.location.hostname.includes('vercel.app')) {
+      console.log('🚀 Spouštím produkční diagnostiku...')
+      runProductionDiagnostics()
+    }
+  }, [])
 
   if (loading) {
     return (

@@ -1,4 +1,5 @@
 import { supabase } from '@/config/supabase'
+import { debugError } from '@/utils/debug'
 import type { Database } from '@/types'
 
 type Wishlist = Database['public']['Tables']['wishlists']['Row']
@@ -13,7 +14,10 @@ export const wishlistService = {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      debugError('Chyba při načítání seznamů přání', error)
+      throw error
+    }
     return data || []
   },
 
