@@ -175,14 +175,7 @@ export class ShareService {
       // Získat všechny shares
       const { data: shares, error: sharesError } = await supabase
         .from('wishlist_shares')
-        .select(`
-          *,
-          shared_with_user:shared_with (
-            id,
-            email,
-            raw_user_meta_data
-          )
-        `)
+        .select('*')
         .eq('wishlist_id', wishlistId)
         .eq('shared_by', currentUser.user.id)
 
