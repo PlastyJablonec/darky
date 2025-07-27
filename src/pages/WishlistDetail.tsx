@@ -5,7 +5,6 @@ import { Layout } from '@/components/Layout'
 import { GiftCard } from '@/components/GiftCard'
 import { GiftModal } from '@/components/GiftModal'
 import { ShareButtons } from '@/components/ShareButtons'
-import { OptimizedImage } from '@/components/OptimizedImage'
 import { useAuth } from '@/context/AuthContext'
 import { useGifts } from '@/hooks/useGifts'
 import { wishlistService } from '@/services/wishlistService'
@@ -226,18 +225,6 @@ export function WishlistDetail() {
           </div>
         </div>
 
-        {wishlist.image_url && (
-          <div className="relative h-32 rounded-lg overflow-hidden">
-            <OptimizedImage
-              src={wishlist.image_url}
-              alt={wishlist.title}
-              className="w-full h-full"
-              aspectRatio={3}
-              objectFit="cover"
-              clickable={true}
-            />
-          </div>
-        )}
 
         {giftsLoading ? (
           <div className="flex items-center justify-center min-h-64">
