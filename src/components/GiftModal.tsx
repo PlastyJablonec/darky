@@ -46,7 +46,6 @@ export function GiftModal({
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (initialData) {
@@ -95,7 +94,6 @@ export function GiftModal({
     }
 
     try {
-      setSelectedFile(file)
       const resizedImage = await resizeImage(file, 800, 600, 0.8)
       setFormData(prev => ({
         ...prev,
@@ -107,7 +105,6 @@ export function GiftModal({
   }
 
   const handleImageRemove = () => {
-    setSelectedFile(null)
     setFormData(prev => ({
       ...prev,
       imageUrl: ''

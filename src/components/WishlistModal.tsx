@@ -35,7 +35,6 @@ export function WishlistModal({
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (initialData) {
@@ -78,7 +77,6 @@ export function WishlistModal({
     }
 
     try {
-      setSelectedFile(file)
       // Zmenši obrázek a převeď na base64
       const resizedImage = await resizeImage(file, 800, 600, 0.8)
       setFormData(prev => ({
@@ -91,7 +89,6 @@ export function WishlistModal({
   }
 
   const handleImageRemove = () => {
-    setSelectedFile(null)
     setFormData(prev => ({
       ...prev,
       imageUrl: ''
