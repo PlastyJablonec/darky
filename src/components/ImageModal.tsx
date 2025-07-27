@@ -42,11 +42,17 @@ export function ImageModal({ src, alt, isOpen, onClose }: ImageModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+      onClick={onClose}
+    >
       {/* Ovládací panel */}
       <div className="absolute top-4 right-4 flex items-center space-x-2 z-10">
         <button
-          onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
+          onClick={(e) => {
+            e.stopPropagation()
+            setScale(s => Math.max(0.5, s - 0.25))
+          }}
           className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
           title="Zmenšit"
         >
@@ -54,7 +60,10 @@ export function ImageModal({ src, alt, isOpen, onClose }: ImageModalProps) {
         </button>
         
         <button
-          onClick={() => setScale(s => Math.min(3, s + 0.25))}
+          onClick={(e) => {
+            e.stopPropagation()
+            setScale(s => Math.min(3, s + 0.25))
+          }}
           className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
           title="Zvětšit"
         >
@@ -62,7 +71,10 @@ export function ImageModal({ src, alt, isOpen, onClose }: ImageModalProps) {
         </button>
         
         <button
-          onClick={() => setRotation(r => r + 90)}
+          onClick={(e) => {
+            e.stopPropagation()
+            setRotation(r => r + 90)
+          }}
           className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
           title="Otočit"
         >
@@ -70,7 +82,10 @@ export function ImageModal({ src, alt, isOpen, onClose }: ImageModalProps) {
         </button>
         
         <button
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation()
+            onClose()
+          }}
           className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
           title="Zavřít"
         >
@@ -79,14 +94,17 @@ export function ImageModal({ src, alt, isOpen, onClose }: ImageModalProps) {
       </div>
 
       {/* Informace o ovládání */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/80 text-sm text-center">
+      <div 
+        className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/80 text-sm text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
         <p>Klikněte mimo obrázek nebo stiskněte Escape pro zavření</p>
       </div>
 
       {/* Obrázek */}
       <div 
-        className="relative max-w-[90vw] max-h-[90vh] cursor-pointer"
-        onClick={onClose}
+        className="relative max-w-[90vw] max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
       >
         <img
           src={src}
@@ -96,7 +114,6 @@ export function ImageModal({ src, alt, isOpen, onClose }: ImageModalProps) {
             transform: `scale(${scale}) rotate(${rotation}deg)`,
             transformOrigin: 'center'
           }}
-          onClick={(e) => e.stopPropagation()}
         />
       </div>
     </div>
