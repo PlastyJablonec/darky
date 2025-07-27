@@ -174,16 +174,18 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
         
         {wishlist.image_url && (
           <div className="px-6">
-            <div className="relative">
-              <OptimizedImage
-                src={wishlist.image_url}
-                alt={wishlist.title}
-                className="w-full h-32 rounded-md"
-                aspectRatio={2.5}
-                objectFit="cover"
-                clickable={true}
-              />
-            </div>
+            <Link to={`/wishlists/${wishlist.id}`} className="block cursor-pointer">
+              <div className="relative">
+                <OptimizedImage
+                  src={wishlist.image_url}
+                  alt={wishlist.title}
+                  className="w-full h-32 rounded-md hover:opacity-90 transition-opacity"
+                  aspectRatio={2.5}
+                  objectFit="cover"
+                  clickable={false}
+                />
+              </div>
+            </Link>
           </div>
         )}
         
