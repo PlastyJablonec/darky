@@ -10,6 +10,7 @@ interface OptimizedImageProps {
   sizes?: string
   onLoad?: () => void
   onError?: () => void
+  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down'
 }
 
 export function OptimizedImage({
@@ -21,7 +22,8 @@ export function OptimizedImage({
   lazy = true,
   sizes = '(max-width: 640px) 400px, (max-width: 1024px) 600px, 800px',
   onLoad,
-  onError
+  onError,
+  objectFit = 'cover'
 }: OptimizedImageProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
@@ -103,7 +105,7 @@ export function OptimizedImage({
           src={imageUrl}
           sizes={sizes}
           alt={alt}
-          className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${
+          className={`absolute inset-0 w-full h-full object-${objectFit} transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           onLoad={handleLoad}

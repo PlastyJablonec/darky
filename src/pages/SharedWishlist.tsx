@@ -183,6 +183,7 @@ export function SharedWishlist() {
                 alt={wishlist.title}
                 className="w-full h-full"
                 aspectRatio={2.5}
+                objectFit="contain"
               />
             </div>
           )}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Gift, Heart, Github, ExternalLink } from 'lucide-react'
+import { Gift, Heart, ExternalLink } from 'lucide-react'
 import { useBuildInfo } from '@/hooks/useBuildInfo'
 
 export function Footer() {
@@ -82,28 +82,16 @@ export function Footer() {
               © {new Date().getFullYear()} DárekList. Všechna práva vyhrazena.
             </div>
             
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-1 text-sm text-gray-600">
-                <span>Vytvořil</span>
-                <a 
-                  href="https://ivanvondracek.github.io/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary-600 hover:text-primary-700 transition-colors flex items-center space-x-1"
-                >
-                  <span>Ivan Vondráček</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-              
+            <div className="flex items-center space-x-1 text-sm text-gray-600">
+              <span>Vytvořil</span>
               <a 
-                href="https://github.com/PlastyJablonec/darky" 
+                href="https://ivanvondracek.github.io/" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-                title="Zdrojový kód na GitHubu"
+                className="font-medium text-primary-600 hover:text-primary-700 transition-colors flex items-center space-x-1"
               >
-                <Github className="h-5 w-5" />
+                <span>Ivan Vondráček</span>
+                <ExternalLink className="h-3 w-3" />
               </a>
             </div>
           </div>

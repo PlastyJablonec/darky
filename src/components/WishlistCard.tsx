@@ -178,6 +178,7 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
                 alt={wishlist.title}
                 className="w-full h-32 rounded-md"
                 aspectRatio={2.5}
+                objectFit="cover"
               />
             </div>
           </div>

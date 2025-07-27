@@ -171,6 +171,7 @@ export function SharedWithMe() {
                           alt=""
                           className="w-full h-full"
                           aspectRatio={1}
+                          objectFit="cover"
                         />
                       </div>
                     )}
