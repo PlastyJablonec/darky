@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Share2, Eye, Users } from 'lucide-react'
+import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X } from 'lucide-react'
 import { Layout } from '@/components/Layout'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { GiftModal } from '@/components/GiftModal'
@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useGifts } from '@/hooks/useGifts'
 import { wishlistService } from '@/services/wishlistService'
 import { ShareService } from '@/services/shareService'
+import { suggestionService, GiftSuggestion } from '@/services/suggestionService'
 import type { Database } from '@/types'
 
 type Wishlist = Database['public']['Tables']['wishlists']['Row']
@@ -35,8 +36,63 @@ export function WishlistDetail() {
   const [editingGift, setEditingGift] = useState<Gift | null>(null)
   const [deletingGift, setDeletingGift] = useState<Gift | null>(null)
   const [shareInfo, setShareInfo] = useState<any>(null)
+  const [suggestions, setSuggestions] = useState<{ [giftId: string]: GiftSuggestion[] }>({})
+  const [, setLoadingSuggestions] = useState(false)
 
   const isOwner = wishlist?.user_id === user?.id
+
+  // Load suggestions for owner
+  useEffect(() => {
+    if (isOwner && gifts.length > 0) {
+      loadSuggestions()
+    }
+  }, [isOwner, gifts])
+
+  const loadSuggestions = async () => {
+    if (!isOwner || !gifts.length) return
+    
+    try {
+      setLoadingSuggestions(true)
+      const suggestionData: { [giftId: string]: GiftSuggestion[] } = {}
+      
+      for (const gift of gifts) {
+        if (!gift.is_group_gift) {
+          const giftSuggestions = await suggestionService.getGiftSuggestions(gift.id)
+          if (giftSuggestions.length > 0) {
+            suggestionData[gift.id] = giftSuggestions
+          }
+        }
+      }
+      
+      setSuggestions(suggestionData)
+    } catch (error) {
+      console.error('Error loading suggestions:', error)
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
+
+  const handleConvertToGroupGift = async (giftId: string) => {
+    try {
+      await suggestionService.convertToGroupGift(giftId)
+      // Reload gifts to show as group gift
+      window.location.reload()
+    } catch (error) {
+      console.error('Error converting to group gift:', error)
+      alert('Chyba při převádění na skupinový dárek: ' + (error instanceof Error ? error.message : 'Neznámá chyba'))
+    }
+  }
+
+  const handleDismissSuggestions = async (giftId: string) => {
+    if (confirm('Opravdu chcete odmítnout všechne návrhy pro tento dárek?')) {
+      // For now, just remove from local state
+      // In a real app, you might want to mark suggestions as dismissed
+      setSuggestions(prev => {
+        const { [giftId]: removed, ...rest } = prev
+        return rest
+      })
+    }
+  }
 
   useEffect(() => {
     async function fetchWishlist() {
@@ -225,6 +281,59 @@ export function WishlistDetail() {
           </div>
         </div>
 
+        {/* Group Gift Suggestions Section for Owner */}
+        {isOwner && Object.keys(suggestions).length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+            <div className="flex items-center space-x-2">
+              <ThumbsUp className="h-5 w-5 text-blue-600" />
+              <h3 className="text-lg font-semibold text-blue-900">
+                Návrhy na skupinové dárky
+              </h3>
+            </div>
+            <p className="text-blue-700 text-sm">
+              Uživatelé navrhli, aby se tyto dárky staly skupinovými. Můžete je schválit nebo odmítnout.
+            </p>
+            
+            <div className="space-y-3">
+              {Object.entries(suggestions).map(([giftId, giftSuggestions]) => {
+                const gift = gifts.find(g => g.id === giftId)
+                if (!gift) return null
+                
+                return (
+                  <div key={giftId} className="bg-white border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 mb-1">{gift.title}</h4>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {giftSuggestions.length} {giftSuggestions.length === 1 ? 'návrh' : 'návrhy'} na skupinový dárek
+                        </p>
+                        <div className="text-xs text-gray-500">
+                          Navrhli: {giftSuggestions.map(s => s.suggestedByName).join(', ')}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => handleConvertToGroupGift(giftId)}
+                          className="btn-primary text-sm py-1 px-3 flex items-center space-x-1"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Schválit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDismissSuggestions(giftId)}
+                          className="btn-outline text-red-600 hover:bg-red-50 text-sm py-1 px-3 flex items-center space-x-1"
+                        >
+                          <X className="h-4 w-4" />
+                          <span>Odmítnout</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {giftsLoading ? (
           <div className="flex items-center justify-center min-h-64">
