@@ -179,14 +179,22 @@ export class SuggestionService {
       throw new Error('User must be authenticated to remove suggestions')
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('group_gift_suggestions')
       .delete()
       .eq('gift_id', giftId)
       .eq('suggested_by', user.user.id)
+      .select()
 
     if (error) {
+      console.error('Delete suggestion error:', error)
       throw new Error(`Failed to remove suggestion: ${error.message}`)
+    }
+
+    if (!data || data.length === 0) {
+      console.warn('No suggestion found to delete for gift:', giftId)
+    } else {
+      console.log('Successfully removed suggestion:', data[0])
     }
   }
 }

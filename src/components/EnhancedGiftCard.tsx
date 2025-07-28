@@ -51,7 +51,7 @@ export function EnhancedGiftCard({
     if (gift.is_group_gift && !isOwner) {
       loadGroupGiftData()
     }
-    if (!gift.is_group_gift && !isOwner) {
+    if (!gift.is_group_gift && !isOwner && user) {
       loadSuggestionData()
     }
   }, [gift.id, gift.is_group_gift, isOwner, user])
