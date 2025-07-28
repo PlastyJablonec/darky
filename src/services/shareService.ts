@@ -209,8 +209,13 @@ export class ShareService {
   // Získání všech uživatelů s přístupem k wishlistu (pro majitele)
   static async getAccessList(wishlistId: string) {
     try {
+      console.log('ShareService.getAccessList called for wishlist:', wishlistId)
       const { data: currentUser } = await supabase.auth.getUser()
-      if (!currentUser.user) return []
+      if (!currentUser.user) {
+        console.log('No current user found')
+        return []
+      }
+      console.log('Current user:', currentUser.user.id)
 
       // Kombinujeme shares a views pro kompletní přehled
       const { data: shares, error: sharesError } = await supabase
@@ -220,12 +225,13 @@ export class ShareService {
         .eq('shared_by', currentUser.user.id)
 
       if (sharesError) {
-        console.error('Chyba při získávání access list:', sharesError)
-        return []
+        console.error('Chyba při získávání shares:', sharesError)
+        throw new Error(`Chyba při načítání sdílení: ${sharesError.message}`)
       }
+      console.log('Shares found:', shares?.length || 0)
 
       // Také získáme uživatele, kteří navštívili veřejný odkaz
-      const { data: publicViews } = await supabase
+      const { data: publicViews, error: viewsError } = await supabase
         .from('wishlist_views')
         .select(`
           viewer_id,
@@ -234,6 +240,11 @@ export class ShareService {
         `)
         .eq('wishlist_id', wishlistId)
         .not('viewer_id', 'is', null)
+
+      if (viewsError) {
+        console.error('Chyba při získávání views:', viewsError)
+      }
+      console.log('Public views found:', publicViews?.length || 0)
 
       // Spojíme data z shares a public views
       const accessList: any[] = []
@@ -295,10 +306,11 @@ export class ShareService {
         }
       }
 
+      console.log('Final access list:', accessList)
       return accessList
     } catch (err) {
       console.error('Chyba při getAccessList:', err)
-      return []
+      throw err
     }
   }
 

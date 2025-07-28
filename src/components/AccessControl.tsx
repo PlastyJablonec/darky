@@ -31,10 +31,13 @@ export function AccessControl({ wishlistId, onClose }: AccessControlProps) {
   const loadAccessList = async () => {
     try {
       setLoading(true)
+      console.log('Loading access list for wishlist:', wishlistId)
       const data = await ShareService.getAccessList(wishlistId)
+      console.log('Access list data:', data)
       setAccessList(data)
     } catch (error) {
       console.error('Error loading access list:', error)
+      alert('Chyba při načítání seznamu přístupů: ' + (error instanceof Error ? error.message : 'Neznámá chyba'))
     } finally {
       setLoading(false)
     }
