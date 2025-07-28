@@ -1,4 +1,4 @@
--- Fix RLS policies for group_gift_suggestions table
+-- Fix RLS policies for group_gift_suggestions table - Simple version
 
 -- Add delete policy for users to delete their own suggestions
 CREATE POLICY "Delete own group gift suggestions" ON public.group_gift_suggestions
@@ -6,20 +6,12 @@ CREATE POLICY "Delete own group gift suggestions" ON public.group_gift_suggestio
     suggested_by = auth.uid()
   );
 
--- Update view policy to allow all authenticated users to see suggestions for public wishlists
+-- Update view policy - simple version without complex JOIN
 DROP POLICY IF EXISTS "View group gift suggestions" ON public.group_gift_suggestions;
 
 CREATE POLICY "View group gift suggestions" ON public.group_gift_suggestions
   FOR SELECT USING (
     auth.uid() IS NOT NULL
-    AND
-    -- Gift is from a public wishlist
-    gift_id IN (
-      SELECT gifts.id 
-      FROM public.gifts
-      JOIN public."wishlists" ON gifts.wishlist_id = "wishlists".id
-      WHERE "wishlists".is_public = true
-    )
   );
 
 -- Grant necessary permissions
