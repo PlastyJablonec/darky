@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X } from 'lucide-react'
+import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X, Shield } from 'lucide-react'
 import { Layout } from '@/components/Layout'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { GiftModal } from '@/components/GiftModal'
 import { ShareButtons } from '@/components/ShareButtons'
+import { AccessControl } from '@/components/AccessControl'
 import { useAuth } from '@/context/AuthContext'
 import { useGifts } from '@/hooks/useGifts'
 import { wishlistService } from '@/services/wishlistService'
@@ -38,6 +39,7 @@ export function WishlistDetail() {
   const [shareInfo, setShareInfo] = useState<any>(null)
   const [suggestions, setSuggestions] = useState<{ [giftId: string]: GiftSuggestion[] }>({})
   const [, setLoadingSuggestions] = useState(false)
+  const [showAccessControl, setShowAccessControl] = useState(false)
 
   const isOwner = wishlist?.user_id === user?.id
 
@@ -270,13 +272,23 @@ export function WishlistDetail() {
             )}
             
             {isOwner && (
-              <button
-                onClick={() => setIsGiftModalOpen(true)}
-                className="btn-primary flex items-center space-x-2"
-              >
-                <Plus className="h-5 w-5" />
-                <span>Přidat dárek</span>
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowAccessControl(true)}
+                  className="btn-outline flex items-center space-x-2"
+                  title="Spravovat přístupy uživatelů"
+                >
+                  <Shield className="h-5 w-5" />
+                  <span>Správa přístupů</span>
+                </button>
+                <button
+                  onClick={() => setIsGiftModalOpen(true)}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Přidat dárek</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -424,6 +436,14 @@ export function WishlistDetail() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Access Control Modal */}
+        {showAccessControl && (
+          <AccessControl
+            wishlistId={wishlist.id}
+            onClose={() => setShowAccessControl(false)}
+          />
         )}
       </div>
     </Layout>

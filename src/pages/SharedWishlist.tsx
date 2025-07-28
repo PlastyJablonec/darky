@@ -46,8 +46,13 @@ export function SharedWishlist() {
         // Sledovat zobrazení
         await ShareService.trackView(wishlistData.id, user?.id)
 
-        // Pokud je uživatel přihlášený, aktualizovat share záznam
+        // Pokud je uživatel přihlášený, zkontrolovat přístup a aktualizovat share záznam
         if (user) {
+          const hasAccess = await ShareService.hasAccess(wishlistData.id, user.id)
+          if (!hasAccess) {
+            setError('Nemáte oprávnění k zobrazení tohoto seznamu')
+            return
+          }
           await ShareService.updateShareView(wishlistData.id, user.id)
         }
         

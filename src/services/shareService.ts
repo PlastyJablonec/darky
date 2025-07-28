@@ -206,6 +206,127 @@ export class ShareService {
     }
   }
 
+  // Získání všech uživatelů s přístupem k wishlistu (pro majitele)
+  static async getAccessList(wishlistId: string) {
+    try {
+      const { data: currentUser } = await supabase.auth.getUser()
+      if (!currentUser.user) return []
+
+      // Kombinujeme shares a views pro kompletní přehled
+      const { data: shares, error: sharesError } = await supabase
+        .from('wishlist_shares')
+        .select(`
+          *,
+          profiles!wishlist_shares_shared_with_fkey (
+            id,
+            display_name,
+            email
+          )
+        `)
+        .eq('wishlist_id', wishlistId)
+        .eq('shared_by', currentUser.user.id)
+
+      if (sharesError) {
+        console.error('Chyba při získávání access list:', sharesError)
+        return []
+      }
+
+      // Také získáme uživatele, kteří navštívili veřejný odkaz
+      const { data: publicViews } = await supabase
+        .from('wishlist_views')
+        .select(`
+          viewer_id,
+          viewed_at,
+          first_viewed_at:viewed_at
+        `)
+        .eq('wishlist_id', wishlistId)
+        .not('viewer_id', 'is', null)
+
+      // Spojíme data z shares a public views
+      const accessList: any[] = []
+
+      // Přidáme explicitně sdílené uživatele
+      if (shares) {
+        for (const share of shares) {
+          accessList.push({
+            id: share.id,
+            userId: share.shared_with,
+            displayName: share.profiles?.display_name || share.profiles?.email?.split('@')[0] || 'Neznámý',
+            email: share.profiles?.email,
+            accessType: 'shared', // explicitně sdílené
+            sharedAt: share.created_at,
+            lastViewedAt: share.viewed_at,
+            firstViewedAt: share.first_viewed_at,
+            canRemove: true
+          })
+        }
+      }
+
+      // Přidáme uživatele z veřejného odkazu (kteří nejsou už v shares)
+      if (publicViews) {
+        const sharedUserIds = new Set(shares?.map(s => s.shared_with) || [])
+        
+        for (const view of publicViews) {
+          if (!sharedUserIds.has(view.viewer_id)) {
+            // Získáme profil uživatele
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('display_name, email')
+              .eq('id', view.viewer_id)
+              .single()
+
+            accessList.push({
+              id: `view-${view.viewer_id}`,
+              userId: view.viewer_id,
+              displayName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
+              email: profile?.email,
+              accessType: 'public', // přišel přes veřejný odkaz
+              sharedAt: null,
+              lastViewedAt: view.viewed_at,
+              firstViewedAt: view.first_viewed_at,
+              canRemove: true
+            })
+          }
+        }
+      }
+
+      return accessList
+    } catch (err) {
+      console.error('Chyba při getAccessList:', err)
+      return []
+    }
+  }
+
+  // Odebrání přístupu konkrétního uživatele
+  static async revokeAccess(wishlistId: string, userId: string) {
+    try {
+      const { data: currentUser } = await supabase.auth.getUser()
+      if (!currentUser.user) {
+        throw new Error('Musíte být přihlášen')
+      }
+
+      // Smazat ze wishlist_shares (pokud tam je)
+      const { error: shareError } = await supabase
+        .from('wishlist_shares')
+        .delete()
+        .eq('wishlist_id', wishlistId)
+        .eq('shared_by', currentUser.user.id)
+        .eq('shared_with', userId)
+
+      if (shareError) {
+        console.error('Chyba při mazání share:', shareError)
+      }
+
+      // Poznámka: Views nemažeme, protože slouží i ke statistikám
+      // Pouze share záznamy kontrolují přístup
+
+      return true
+    } catch (err) {
+      console.error('Chyba při revokeAccess:', err)
+      throw err
+    }
+  }
+
   // Smazání share záznamu
   static async removeShare(shareId: string) {
     try {
@@ -251,6 +372,43 @@ export class ShareService {
     } catch (err) {
       console.error('Chyba při getViewStats:', err)
       return []
+    }
+  }
+
+  // Kontrola, zda má uživatel přístup k wishlistu
+  static async hasAccess(wishlistId: string, userId: string): Promise<boolean> {
+    try {
+      // Kontrola, zda je seznam veřejný
+      const { data: wishlist } = await supabase
+        .from('wishlists')
+        .select('is_public, user_id')
+        .eq('id', wishlistId)
+        .single()
+
+      if (!wishlist) return false
+
+      // Vlastník má vždy přístup
+      if (wishlist.user_id === userId) return true
+
+      // Pokud není veřejný, zkontrolujeme share záznamy
+      if (!wishlist.is_public) {
+        const { data: share } = await supabase
+          .from('wishlist_shares')
+          .select('id')
+          .eq('wishlist_id', wishlistId)
+          .eq('shared_with', userId)
+          .single()
+
+        return !!share
+      }
+
+      // Pro veřejné seznamy má každý přístup
+      // V budoucnu můžeme přidat "blacklist" funkcionalitu pro odebrané přístupy
+      return true
+
+    } catch (error) {
+      console.error('Error checking access:', error)
+      return false
     }
   }
 }
