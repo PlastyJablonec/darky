@@ -87,16 +87,23 @@ export function GroupGiftProgress({
           <h4 className="text-sm font-medium text-gray-700 mb-2">Přispěvatelé:</h4>
           <div className="space-y-2">
             {summary.contributions.map((contribution) => (
-              <div key={contribution.id} className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                  <span className="text-gray-700">
-                    {contribution.contributorName}
+              <div key={contribution.id} className="text-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                    <span className="text-gray-700">
+                      {contribution.contributorName}
+                    </span>
+                  </div>
+                  <span className="font-medium text-gray-900">
+                    {formatAmount(contribution.amount)}
                   </span>
                 </div>
-                <span className="font-medium text-gray-900">
-                  {formatAmount(contribution.amount)}
-                </span>
+                {contribution.message && !contribution.isAnonymous && (
+                  <div className="ml-4 mt-1 text-xs text-gray-600 italic bg-gray-50 rounded px-2 py-1">
+                    "{contribution.message}"
+                  </div>
+                )}
               </div>
             ))}
           </div>
