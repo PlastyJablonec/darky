@@ -157,6 +157,28 @@ export function EnhancedGiftCard({
     }
   }
 
+  const handleAgreeAndContribute = async () => {
+    try {
+      // First suggest (agree with the proposal)
+      await suggestionService.suggestGroupGift(gift.id)
+      
+      // Check if we should convert to group gift (e.g., after 2+ suggestions)
+      const count = await suggestionService.getSuggestionCount(gift.id)
+      if (count >= 2) {
+        // Convert to group gift
+        await suggestionService.convertToGroupGift(gift.id)
+        // Reload the page data to show as group gift
+        window.location.reload()
+      } else {
+        // Just refresh suggestion data
+        await loadSuggestionData()
+      }
+    } catch (error) {
+      console.error('Error agreeing with suggestion:', error)
+      alert('Chyba při souhlasu s návrhem: ' + (error instanceof Error ? error.message : 'Neznámá chyba'))
+    }
+  }
+
   const handlePriceClick = () => {
     if (!user) {
       setAuthAction('zobrazit přesnou cenu')
@@ -341,21 +363,34 @@ export function EnhancedGiftCard({
                 
                 {/* Suggest Group Gift Option */}
                 {!gift.is_reserved && gift.price && gift.price > 1000 && (
-                  <button
-                    onClick={() => handleAuthAction('navrhnout skupinový dárek', handleSuggestGroupGift)}
-                    className={`flex items-center space-x-2 w-full text-sm py-2 ${
-                      hasUserSuggested 
-                        ? 'btn-outline bg-blue-50 text-blue-700 border-blue-200' 
-                        : 'btn-outline'
-                    }`}
-                    disabled={hasUserSuggested}
-                  >
-                    <ThumbsUp className="h-4 w-4" />
-                    <span>
-                      {hasUserSuggested ? 'Navrženo' : 'Navrhnout jako skupinový'}
-                      {suggestionCount > 0 && ` (${suggestionCount})`}
-                    </span>
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => handleAuthAction('navrhnout skupinový dárek', handleSuggestGroupGift)}
+                      className={`flex items-center space-x-2 w-full text-sm py-2 ${
+                        hasUserSuggested 
+                          ? 'btn-outline bg-blue-50 text-blue-700 border-blue-200' 
+                          : 'btn-outline'
+                      }`}
+                      disabled={hasUserSuggested}
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                      <span>
+                        {hasUserSuggested ? 'Navrženo' : 'Navrhnout jako skupinový'}
+                        {suggestionCount > 0 && ` (${suggestionCount})`}
+                      </span>
+                    </button>
+                    
+                    {/* Show suggestions from others */}
+                    {suggestionCount > 0 && !hasUserSuggested && (
+                      <button
+                        onClick={() => handleAuthAction('souhlasit s návrhem', handleAgreeAndContribute)}
+                        className="btn-primary flex items-center space-x-2 w-full text-sm py-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Souhlasit a přispět ({suggestionCount} lidí navrhlo)</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}

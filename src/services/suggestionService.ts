@@ -148,6 +148,29 @@ export class SuggestionService {
       console.warn('Failed to send notification:', error)
     }
   }
+
+  // Convert gift to group gift when enough people suggest it
+  static async convertToGroupGift(giftId: string): Promise<void> {
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) {
+      throw new Error('User must be authenticated')
+    }
+
+    // Update the gift to be a group gift
+    const { error } = await supabase
+      .from('gifts')
+      .update({ 
+        is_group_gift: true,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', giftId)
+
+    if (error) {
+      throw new Error(`Failed to convert gift to group gift: ${error.message}`)
+    }
+
+    console.log(`🎁 Gift converted to group gift based on community suggestions!`)
+  }
 }
 
 export const suggestionService = SuggestionService
