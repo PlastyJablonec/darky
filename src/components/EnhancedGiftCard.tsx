@@ -179,6 +179,18 @@ export function EnhancedGiftCard({
     }
   }
 
+  const handleRemoveSuggestion = async () => {
+    if (confirm('Opravdu chcete zrušit svůj návrh skupinového dárku?')) {
+      try {
+        await suggestionService.removeSuggestion(gift.id)
+        await loadSuggestionData() // Refresh suggestion data
+      } catch (error) {
+        console.error('Error removing suggestion:', error)
+        alert('Chyba při rušení návrhu: ' + (error instanceof Error ? error.message : 'Neznámá chyba'))
+      }
+    }
+  }
+
   const handlePriceClick = () => {
     if (!user) {
       setAuthAction('zobrazit přesnou cenu')
@@ -364,21 +376,35 @@ export function EnhancedGiftCard({
                 {/* Suggest Group Gift Option */}
                 {!gift.is_reserved && gift.price && gift.price > 1000 && (
                   <div className="space-y-2">
-                    <button
-                      onClick={() => handleAuthAction('navrhnout skupinový dárek', handleSuggestGroupGift)}
-                      className={`flex items-center space-x-2 w-full text-sm py-2 ${
-                        hasUserSuggested 
-                          ? 'btn-outline bg-blue-50 text-blue-700 border-blue-200' 
-                          : 'btn-outline'
-                      }`}
-                      disabled={hasUserSuggested}
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                      <span>
-                        {hasUserSuggested ? 'Navrženo' : 'Navrhnout jako skupinový'}
-                        {suggestionCount > 0 && ` (${suggestionCount})`}
-                      </span>
-                    </button>
+                    {!hasUserSuggested ? (
+                      <button
+                        onClick={() => handleAuthAction('navrhnout skupinový dárek', handleSuggestGroupGift)}
+                        className="btn-outline flex items-center space-x-2 w-full text-sm py-2"
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                        <span>
+                          Navrhnout jako skupinový
+                          {suggestionCount > 0 && ` (${suggestionCount})`}
+                        </span>
+                      </button>
+                    ) : (
+                      <div className="flex space-x-2">
+                        <button
+                          className="btn-outline bg-blue-50 text-blue-700 border-blue-200 flex items-center space-x-2 flex-1 text-sm py-2"
+                          disabled
+                        >
+                          <ThumbsUp className="h-4 w-4" />
+                          <span>Navrženo ({suggestionCount})</span>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveSuggestion()}
+                          className="btn-outline text-red-600 hover:bg-red-50 flex items-center space-x-1 px-3 text-sm py-2"
+                          title="Zrušit návrh"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
                     
                     {/* Show suggestions from others */}
                     {suggestionCount > 0 && !hasUserSuggested && (

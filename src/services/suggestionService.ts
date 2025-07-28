@@ -171,6 +171,24 @@ export class SuggestionService {
 
     console.log(`🎁 Gift converted to group gift based on community suggestions!`)
   }
+
+  // Remove user's suggestion for a gift
+  static async removeSuggestion(giftId: string): Promise<void> {
+    const { data: user } = await supabase.auth.getUser()
+    if (!user.user) {
+      throw new Error('User must be authenticated to remove suggestions')
+    }
+
+    const { error } = await supabase
+      .from('group_gift_suggestions')
+      .delete()
+      .eq('gift_id', giftId)
+      .eq('suggested_by', user.user.id)
+
+    if (error) {
+      throw new Error(`Failed to remove suggestion: ${error.message}`)
+    }
+  }
 }
 
 export const suggestionService = SuggestionService
