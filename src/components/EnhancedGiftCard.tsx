@@ -129,6 +129,16 @@ export function EnhancedGiftCard({
       })
     }
     
+    // If there's a message and user is not anonymous, also send it to chat
+    if (message && message.trim() && !isAnonymous) {
+      try {
+        await contributionService.sendContributionMessage(gift.id, message.trim())
+      } catch (error) {
+        console.error('Error sending chat message:', error)
+        // Don't fail the whole operation if chat message fails
+      }
+    }
+    
     // Reload data
     await loadGroupGiftData()
   }
@@ -167,11 +177,13 @@ export function EnhancedGiftCard({
       if (count >= 2) {
         // Convert to group gift
         await suggestionService.convertToGroupGift(gift.id)
-        // Reload the page data to show as group gift
+        // Reload the page data to show as group gift and then open contribute modal
         window.location.reload()
+        // Note: After reload, user will see group gift and can click contribute
       } else {
-        // Just refresh suggestion data
+        // Just refresh suggestion data - dárek ještě není skupinový
         await loadSuggestionData()
+        alert('Váš souhlas byl zaznamenán! Jakmile bude dostatek návrhů, dárek se automaticky převede na skupinový.')
       }
     } catch (error) {
       console.error('Error agreeing with suggestion:', error)

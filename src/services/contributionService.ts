@@ -19,34 +19,29 @@ export class ContributionService {
       return []
     }
 
-    // For getting multiple user names, we'll use a simpler approach
-    // Since we can't easily get other users' metadata, we'll show current user properly and others as generic
+    // Get contributor profiles from profiles table
+    const contributorIds = [...new Set(contributions.map(c => c.contributor_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, email')
+      .in('id', contributorIds)
+
+    // Get current user info for fallback
     const { data: { user: currentUser } } = await supabase.auth.getUser()
-    const currentUserId = currentUser?.id
-    
-    // Create a simple profiles map - current user gets real name, others get email prefix
-    const profiles: any[] = []
-    for (const contribution of contributions) {
-      if (contribution.contributor_id === currentUserId) {
-        // Current user - use real name
-        profiles.push({
-          id: currentUserId,
-          display_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.full_name,
-          email: currentUser?.email
-        })
-      } else {
-        // Other users - we don't have access to their metadata, use generic name
-        profiles.push({
-          id: contribution.contributor_id,
-          display_name: null, // Will use email prefix fallback
-          email: null
-        })
-      }
-    }
 
     // Map contributions with profile data
     return contributions.map(contribution => {
       const profile = profiles?.find(p => p.id === contribution.contributor_id)
+      
+      // Use profile data first, then fallback to current user metadata if it's current user
+      let displayName = profile?.display_name
+      let email = profile?.email
+      
+      // If no profile data and it's current user, use auth metadata
+      if (!displayName && currentUser && contribution.contributor_id === currentUser.id) {
+        displayName = currentUser.user_metadata?.display_name || currentUser.user_metadata?.full_name
+        email = currentUser.email
+      }
       
       return {
         id: contribution.id,
@@ -54,8 +49,8 @@ export class ContributionService {
         contributorId: contribution.contributor_id,
         contributorName: contribution.is_anonymous 
           ? 'Anonymní přispěvatel' 
-          : (profile?.display_name || profile?.email?.split('@')[0] || 'Přispěvatel'),
-        contributorEmail: contribution.is_anonymous ? undefined : profile?.email,
+          : (displayName || email?.split('@')[0] || 'Přispěvatel'),
+        contributorEmail: contribution.is_anonymous ? undefined : email,
         amount: contribution.amount,
         currency: contribution.currency,
         message: contribution.message || undefined,
