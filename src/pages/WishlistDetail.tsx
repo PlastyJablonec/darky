@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Plus, Share2, Eye, Users } from 'lucide-react'
 import { Layout } from '@/components/Layout'
-import { GiftCard } from '@/components/GiftCard'
+import { GroupGiftCard } from '@/components/GroupGiftCard'
 import { GiftModal } from '@/components/GiftModal'
 import { ShareButtons } from '@/components/ShareButtons'
 import { useAuth } from '@/context/AuthContext'
@@ -261,7 +261,7 @@ export function WishlistDetail() {
         ) : (
           <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {gifts.map((gift) => (
-              <GiftCard
+              <GroupGiftCard
                 key={gift.id}
                 gift={gift}
                 isOwner={isOwner}

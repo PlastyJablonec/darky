@@ -43,11 +43,34 @@ export interface Gift {
 export interface Contribution {
   id: string;
   giftId: string;
+  contributorId: string;
   contributorName: string;
   contributorEmail?: string;
   amount: number;
+  currency: string;
   message?: string;
+  isAnonymous: boolean;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ContributionMessage {
+  id: string;
+  giftId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  createdAt: Date;
+}
+
+export interface GroupGiftSummary {
+  giftId: string;
+  targetAmount: number;
+  totalContributed: number;
+  remainingAmount: number;
+  contributorCount: number;
+  isFullyFunded: boolean;
+  contributions: Contribution[];
 }
 
 export interface WishlistShare {
@@ -215,6 +238,87 @@ export interface Database {
           viewer_id?: string | null;
           viewer_info?: any | null;
           viewed_at?: string;
+        };
+      };
+      gift_contributions: {
+        Row: {
+          id: string;
+          gift_id: string;
+          contributor_id: string;
+          amount: number;
+          currency: string;
+          message: string | null;
+          is_anonymous: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          gift_id: string;
+          contributor_id: string;
+          amount: number;
+          currency?: string;
+          message?: string | null;
+          is_anonymous?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          gift_id?: string;
+          contributor_id?: string;
+          amount?: number;
+          currency?: string;
+          message?: string | null;
+          is_anonymous?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      gift_contribution_messages: {
+        Row: {
+          id: string;
+          gift_id: string;
+          sender_id: string;
+          message: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          gift_id: string;
+          sender_id: string;
+          message: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          gift_id?: string;
+          sender_id?: string;
+          message?: string;
+          created_at?: string;
+        };
+      };
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          display_name: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string | null;
+          display_name?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string | null;
+          display_name?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
     };

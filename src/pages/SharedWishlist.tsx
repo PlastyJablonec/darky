@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Gift, Heart } from 'lucide-react'
-import { GiftCard } from '@/components/GiftCard'
+import { GroupGiftCard } from '@/components/GroupGiftCard'
 import { ShareButtons } from '@/components/ShareButtons'
 import { OptimizedImage } from '@/components/OptimizedImage'
 import { useAuth } from '@/context/AuthContext'
@@ -219,7 +219,7 @@ export function SharedWishlist() {
           ) : (
             <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {gifts.map((gift) => (
-                <GiftCard
+                <GroupGiftCard
                   key={gift.id}
                   gift={gift}
                   isOwner={false}

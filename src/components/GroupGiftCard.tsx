@@ -1,0 +1,405 @@
+import { useState, useEffect } from 'react'
+import { MoreHorizontal, Edit, Trash2, ExternalLink, ShoppingCart, Users, Lock, Plus, MessageCircle } from 'lucide-react'
+import { Menu, Transition } from '@headlessui/react'
+import { useAuth } from '@/context/AuthContext'
+import { giftService } from '@/services/giftService'
+import { contributionService } from '@/services/contributionService'
+import { AuthDialog } from './AuthDialog'
+import { OptimizedImage } from './OptimizedImage'
+import { GroupGiftProgress } from './GroupGiftProgress'
+import { ContributeModal } from './ContributeModal'
+import { ContributorChat } from './ContributorChat'
+import type { Database, GroupGiftSummary, Contribution } from '@/types'
+
+type Gift = Database['public']['Tables']['gifts']['Row']
+
+interface GroupGiftCardProps {
+  gift: Gift
+  isOwner: boolean
+  onEdit?: (gift: Gift) => void
+  onDelete?: (gift: Gift) => void
+  onReserve?: (gift: Gift) => void
+  onUnreserve?: (gift: Gift) => void
+}
+
+export function GroupGiftCard({ 
+  gift, 
+  isOwner, 
+  onEdit, 
+  onDelete, 
+  onReserve, 
+  onUnreserve 
+}: GroupGiftCardProps) {
+  const { user } = useAuth()
+  const [showAuthDialog, setShowAuthDialog] = useState(false)
+  const [authAction, setAuthAction] = useState('')
+  const [showContributeModal, setShowContributeModal] = useState(false)
+  const [showChat, setShowChat] = useState(false)
+  const [groupSummary, setGroupSummary] = useState<GroupGiftSummary | null>(null)
+  const [userContribution, setUserContribution] = useState<Contribution | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const isReservedByCurrentUser = gift.reserved_by === user?.id
+  const canReserve = !isOwner && !gift.is_reserved && !gift.is_group_gift
+  const canUnreserve = !isOwner && isReservedByCurrentUser && !gift.is_group_gift
+  const canContribute = !isOwner && gift.is_group_gift && !gift.is_reserved
+  const hasContributed = userContribution !== null
+
+  useEffect(() => {
+    if (gift.is_group_gift && !isOwner) {
+      loadGroupGiftData()
+    }
+  }, [gift.id, gift.is_group_gift, isOwner, user])
+
+  const loadGroupGiftData = async () => {
+    if (!user) return
+
+    try {
+      setLoading(true)
+      const [summary, contribution] = await Promise.all([
+        contributionService.getGroupGiftSummary(gift.id),
+        contributionService.getUserContribution(gift.id)
+      ])
+      setGroupSummary(summary)
+      setUserContribution(contribution)
+    } catch (error) {
+      console.error('Error loading group gift data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatPrice = (price: number | null, currency: string) => {
+    return giftService.formatPrice(price, currency)
+  }
+
+  const getPriorityColor = (priority: string) => {
+    return giftService.getPriorityColor(priority)
+  }
+
+  const getPriorityLabel = (priority: string) => {
+    return giftService.getPriorityLabel(priority)
+  }
+
+  const handleAuthAction = (action: string, callback: () => void) => {
+    if (!user) {
+      setAuthAction(action)
+      setShowAuthDialog(true)
+    } else {
+      callback()
+    }
+  }
+
+  const handleContribute = async (amount: number, message?: string, isAnonymous?: boolean) => {
+    if (userContribution) {
+      // Update existing contribution
+      await contributionService.updateContribution(userContribution.id, {
+        amount,
+        message,
+        isAnonymous
+      })
+    } else {
+      // Create new contribution
+      await contributionService.createContribution({
+        giftId: gift.id,
+        amount,
+        currency: gift.currency,
+        message,
+        isAnonymous
+      })
+    }
+    
+    // Reload data
+    await loadGroupGiftData()
+  }
+
+  const handlePriceClick = () => {
+    if (!user) {
+      setAuthAction('zobrazit přesnou cenu')
+      setShowAuthDialog(true)
+    }
+  }
+
+  const handleProductUrlClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault()
+      setAuthAction('zobrazit odkaz na produkt')
+      setShowAuthDialog(true)
+    }
+  }
+
+  // Maskování ceny pro neregistrované uživatele
+  const displayPrice = () => {
+    if (!gift.price) return null
+    if (!user) {
+      return (
+        <button
+          onClick={handlePriceClick}
+          className="text-lg font-bold text-primary-600 hover:text-primary-700 transition-colors relative group"
+        >
+          <span className="filter blur-sm">
+            {formatPrice(gift.price, gift.currency)}
+          </span>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Lock className="h-4 w-4 text-primary-600" />
+          </div>
+          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+            Klikněte pro zobrazení ceny
+          </div>
+        </button>
+      )
+    }
+    return (
+      <span className="text-lg font-bold text-primary-600">
+        {formatPrice(gift.price, gift.currency)}
+      </span>
+    )
+  }
+
+  return (
+    <div className={`card hover:shadow-md transition-all duration-200 ${
+      gift.is_reserved && !isOwner ? 'opacity-75 bg-gray-50' : ''
+    }`}>
+      {gift.image_url && (
+        <div className="relative">
+          <OptimizedImage
+            src={gift.image_url}
+            alt={gift.title}
+            className="w-full h-40 sm:h-48 rounded-t-lg"
+            aspectRatio={1.5}
+            objectFit="cover"
+            clickable={true}
+          />
+          {gift.is_reserved && !isOwner && (
+            <div className="absolute inset-0 bg-black bg-opacity-30 rounded-t-lg flex items-center justify-center">
+              <span className="bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
+                {gift.is_group_gift ? 'Plně financováno' : 'Rezervováno'}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+      
+      <div className="card-header">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              {gift.title}
+            </h3>
+            
+            {gift.description && (
+              <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                {gift.description}
+              </p>
+            )}
+            
+            <div className="flex items-center space-x-2 mb-2">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(gift.priority)}`}>
+                {getPriorityLabel(gift.priority)}
+              </span>
+              
+              {gift.is_group_gift && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <Users className="h-3 w-3 mr-1" />
+                  Skupinový
+                </span>
+              )}
+              
+              {displayPrice()}
+            </div>
+            
+            {gift.product_url && (
+              <a
+                href={gift.product_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleProductUrlClick}
+                className={`inline-flex items-center text-sm transition-colors relative group ${
+                  user 
+                    ? 'text-primary-600 hover:text-primary-700' 
+                    : 'text-gray-400 cursor-pointer hover:text-primary-600'
+                }`}
+              >
+                {user ? (
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-1" />
+                )}
+                {user ? 'Zobrazit produkt' : 'Odkaz na produkt'}
+                {!user && (
+                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    Přihlaste se pro odkaz
+                  </div>
+                )}
+              </a>
+            )}
+          </div>
+
+          {(isOwner || canReserve || canUnreserve || canContribute) && (
+            <Menu as="div" className="relative">
+              <Menu.Button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <MoreHorizontal className="h-4 w-4 text-gray-500" />
+              </Menu.Button>
+              
+              <Transition
+                enter="transition ease-out duration-100"
+                enterFrom="transform opacity-0 scale-95"
+                enterTo="transform opacity-100 scale-100"
+                leave="transition ease-in duration-75"
+                leaveFrom="transform opacity-100 scale-100"
+                leaveTo="transform opacity-0 scale-95"
+              >
+                <Menu.Items className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
+                  <div className="py-1">
+                    {canContribute && !gift.is_reserved && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => handleAuthAction('přispět na dárek', () => setShowContributeModal(true))}
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } flex items-center w-full px-4 py-2 text-sm ${hasContributed ? 'text-blue-600' : 'text-green-600'}`}
+                          >
+                            <Plus className="h-4 w-4 mr-3" />
+                            {hasContributed ? 'Upravit příspěvek' : 'Přispět'}
+                          </button>
+                        )}
+                      </Menu.Item>
+                    )}
+
+                    {hasContributed && groupSummary && groupSummary.contributorCount > 1 && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setShowChat(!showChat)}
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } flex items-center w-full px-4 py-2 text-sm text-blue-600`}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-3" />
+                            Komunikace
+                          </button>
+                        )}
+                      </Menu.Item>
+                    )}
+                    
+                    {canReserve && onReserve && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => handleAuthAction('rezervovat dárek', () => onReserve(gift))}
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } flex items-center w-full px-4 py-2 text-sm text-green-600`}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-3" />
+                            Rezervovat
+                          </button>
+                        )}
+                      </Menu.Item>
+                    )}
+                    
+                    {canUnreserve && onUnreserve && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => onUnreserve(gift)}
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } flex items-center w-full px-4 py-2 text-sm text-orange-600`}
+                          >
+                            <ShoppingCart className="h-4 w-4 mr-3" />
+                            Zrušit rezervaci
+                          </button>
+                        )}
+                      </Menu.Item>
+                    )}
+                    
+                    {isOwner && onEdit && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => onEdit(gift)}
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } flex items-center w-full px-4 py-2 text-sm text-gray-700`}
+                          >
+                            <Edit className="h-4 w-4 mr-3" />
+                            Upravit
+                          </button>
+                        )}
+                      </Menu.Item>
+                    )}
+                    
+                    {isOwner && onDelete && (
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => onDelete(gift)}
+                            className={`${
+                              active ? 'bg-gray-100' : ''
+                            } flex items-center w-full px-4 py-2 text-sm text-red-600`}
+                          >
+                            <Trash2 className="h-4 w-4 mr-3" />
+                            Smazat
+                          </button>
+                        )}
+                      </Menu.Item>
+                    )}
+                  </div>
+                </Menu.Items>
+              </Transition>
+            </Menu>
+          )}
+        </div>
+      </div>
+
+      {/* Group Gift Progress */}
+      {gift.is_group_gift && !isOwner && groupSummary && (
+        <div className="px-6 pb-4">
+          <GroupGiftProgress 
+            summary={groupSummary} 
+            showContributors={true}
+          />
+        </div>
+      )}
+
+      {/* Contributor Chat */}
+      {showChat && hasContributed && !isOwner && (
+        <div className="px-6 pb-4">
+          <ContributorChat giftId={gift.id} />
+        </div>
+      )}
+      
+      {gift.is_reserved && !isOwner && (
+        <div className="card-footer">
+          <div className="text-xs text-gray-500">
+            {gift.is_group_gift ? 'Plně financováno' : 'Rezervováno'} {gift.reserved_at && new Date(gift.reserved_at).toLocaleDateString('cs-CZ')}
+          </div>
+        </div>
+      )}
+      
+      {/* Modals */}
+      <AuthDialog
+        isOpen={showAuthDialog}
+        onClose={() => setShowAuthDialog(false)}
+        action={authAction}
+      />
+
+      {showContributeModal && groupSummary && (
+        <ContributeModal
+          isOpen={showContributeModal}
+          onClose={() => setShowContributeModal(false)}
+          onContribute={handleContribute}
+          summary={groupSummary}
+          userContribution={userContribution ? {
+            amount: userContribution.amount,
+            message: userContribution.message,
+            isAnonymous: userContribution.isAnonymous
+          } : null}
+          isEditing={hasContributed}
+        />
+      )}
+    </div>
+  )
+}
