@@ -29,6 +29,7 @@ export class ContributionService {
     // Get current user info for fallback
     const { data: { user: currentUser } } = await supabase.auth.getUser()
 
+
     // Map contributions with profile data
     return contributions.map(contribution => {
       const profile = profiles?.find(p => p.id === contribution.contributor_id)
