@@ -215,14 +215,7 @@ export class ShareService {
       // Kombinujeme shares a views pro kompletní přehled
       const { data: shares, error: sharesError } = await supabase
         .from('wishlist_shares')
-        .select(`
-          *,
-          profiles!wishlist_shares_shared_with_fkey (
-            id,
-            display_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('wishlist_id', wishlistId)
         .eq('shared_by', currentUser.user.id)
 
@@ -245,14 +238,26 @@ export class ShareService {
       // Spojíme data z shares a public views
       const accessList: any[] = []
 
+      // Získáme profily pro sdílené uživatele
+      let profiles: any[] = []
+      if (shares && shares.length > 0) {
+        const userIds = shares.map(s => s.shared_with)
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, email')
+          .in('id', userIds)
+        profiles = profilesData || []
+      }
+
       // Přidáme explicitně sdílené uživatele
       if (shares) {
         for (const share of shares) {
+          const profile = profiles.find(p => p.id === share.shared_with)
           accessList.push({
             id: share.id,
             userId: share.shared_with,
-            displayName: share.profiles?.display_name || share.profiles?.email?.split('@')[0] || 'Neznámý',
-            email: share.profiles?.email,
+            displayName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
+            email: profile?.email,
             accessType: 'shared', // explicitně sdílené
             sharedAt: share.created_at,
             lastViewedAt: share.viewed_at,
