@@ -321,6 +321,26 @@ export interface Database {
           updated_at?: string;
         };
       };
+      group_gift_suggestions: {
+        Row: {
+          id: string;
+          gift_id: string;
+          suggested_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          gift_id: string;
+          suggested_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          gift_id?: string;
+          suggested_by?: string;
+          created_at?: string;
+        };
+      };
     };
   };
 }

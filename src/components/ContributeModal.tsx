@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Euro, MessageCircle } from 'lucide-react'
+import { X, MessageCircle } from 'lucide-react'
 import type { GroupGiftSummary } from '@/types'
 
 interface ContributeModalProps {
@@ -129,7 +129,9 @@ export function ContributeModal({
               Částka (Kč) *
             </label>
             <div className="relative">
-              <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-medium text-sm">
+                Kč
+              </div>
               <input
                 type="number"
                 id="amount"

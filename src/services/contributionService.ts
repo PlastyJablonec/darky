@@ -4,37 +4,66 @@ import type { Contribution, ContributionMessage, GroupGiftSummary } from '@/type
 export class ContributionService {
   // Get all contributions for a gift (only for contributors, not gift owner)
   static async getGiftContributions(giftId: string): Promise<Contribution[]> {
-    const { data, error } = await supabase
+    // First get contributions
+    const { data: contributions, error: contributionsError } = await supabase
       .from('gift_contributions')
-      .select(`
-        *,
-        profiles:contributor_id (
-          display_name,
-          email
-        )
-      `)
+      .select('*')
       .eq('gift_id', giftId)
       .order('created_at', { ascending: true })
 
-    if (error) {
-      throw new Error(`Failed to fetch contributions: ${error.message}`)
+    if (contributionsError) {
+      throw new Error(`Failed to fetch contributions: ${contributionsError.message}`)
     }
 
-    return data.map(contribution => ({
-      id: contribution.id,
-      giftId: contribution.gift_id,
-      contributorId: contribution.contributor_id,
-      contributorName: contribution.is_anonymous 
-        ? 'Anonymní přispěvatel' 
-        : (contribution.profiles?.display_name || contribution.profiles?.email?.split('@')[0] || 'Neznámý'),
-      contributorEmail: contribution.is_anonymous ? undefined : contribution.profiles?.email,
-      amount: contribution.amount,
-      currency: contribution.currency,
-      message: contribution.message || undefined,
-      isAnonymous: contribution.is_anonymous,
-      createdAt: new Date(contribution.created_at),
-      updatedAt: new Date(contribution.updated_at)
-    }))
+    if (!contributions || contributions.length === 0) {
+      return []
+    }
+
+    // For getting multiple user names, we'll use a simpler approach
+    // Since we can't easily get other users' metadata, we'll show current user properly and others as generic
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    const currentUserId = currentUser?.id
+    
+    // Create a simple profiles map - current user gets real name, others get email prefix
+    const profiles: any[] = []
+    for (const contribution of contributions) {
+      if (contribution.contributor_id === currentUserId) {
+        // Current user - use real name
+        profiles.push({
+          id: currentUserId,
+          display_name: currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.full_name,
+          email: currentUser?.email
+        })
+      } else {
+        // Other users - we don't have access to their metadata, use generic name
+        profiles.push({
+          id: contribution.contributor_id,
+          display_name: null, // Will use email prefix fallback
+          email: null
+        })
+      }
+    }
+
+    // Map contributions with profile data
+    return contributions.map(contribution => {
+      const profile = profiles?.find(p => p.id === contribution.contributor_id)
+      
+      return {
+        id: contribution.id,
+        giftId: contribution.gift_id,
+        contributorId: contribution.contributor_id,
+        contributorName: contribution.is_anonymous 
+          ? 'Anonymní přispěvatel' 
+          : (profile?.display_name || profile?.email?.split('@')[0] || 'Přispěvatel'),
+        contributorEmail: contribution.is_anonymous ? undefined : profile?.email,
+        amount: contribution.amount,
+        currency: contribution.currency,
+        message: contribution.message || undefined,
+        isAnonymous: contribution.is_anonymous,
+        createdAt: new Date(contribution.created_at),
+        updatedAt: new Date(contribution.updated_at)
+      }
+    })
   }
 
   // Create a new contribution
@@ -66,8 +95,13 @@ export class ContributionService {
     }
 
     // Check if user is not the gift owner
-    if (gift.wishlists.user_id === user.user.id) {
+    if ((gift.wishlists as any).user_id === user.user.id) {
       throw new Error('Gift owner cannot contribute to their own gift')
+    }
+
+    // Check if gift has a target price
+    if (!gift.price || gift.price <= 0) {
+      throw new Error('Tento dárek nemá nastavenou cílovou cenu pro skupinové financování')
     }
 
     // Check if contribution would exceed target price
@@ -77,10 +111,10 @@ export class ContributionService {
       .eq('gift_id', data.giftId)
 
     const currentTotal = existingContributions?.reduce((sum, c) => sum + c.amount, 0) || 0
-    const targetPrice = gift.price || 0
+    const targetPrice = gift.price
 
     if (currentTotal + data.amount > targetPrice) {
-      throw new Error(`Contribution would exceed target price. Remaining: ${targetPrice - currentTotal} ${data.currency || 'CZK'}`)
+      throw new Error(`Příspěvek by překročil cílovou částku. Zbývá: ${targetPrice - currentTotal} ${data.currency || 'CZK'}`)
     }
 
     const { data: newContribution, error } = await supabase
@@ -93,13 +127,7 @@ export class ContributionService {
         message: data.message,
         is_anonymous: data.isAnonymous || false
       })
-      .select(`
-        *,
-        profiles:contributor_id (
-          display_name,
-          email
-        )
-      `)
+      .select('*')
       .single()
 
     if (error) {
@@ -109,14 +137,21 @@ export class ContributionService {
       throw new Error(`Failed to create contribution: ${error.message}`)
     }
 
+    // Get user display name directly from auth (same as Layout component)
+    const displayName = user.user.user_metadata?.display_name || user.user.user_metadata?.full_name || user.user.email?.split('@')[0]
+    const profile = {
+      display_name: displayName,
+      email: user.user.email
+    }
+
     return {
       id: newContribution.id,
       giftId: newContribution.gift_id,
       contributorId: newContribution.contributor_id,
       contributorName: newContribution.is_anonymous 
         ? 'Anonymní přispěvatel' 
-        : (newContribution.profiles?.display_name || newContribution.profiles?.email?.split('@')[0] || 'Neznámý'),
-      contributorEmail: newContribution.is_anonymous ? undefined : newContribution.profiles?.email,
+        : (profile?.display_name || profile?.email?.split('@')[0] || 'Já'),
+      contributorEmail: newContribution.is_anonymous ? undefined : profile?.email,
       amount: newContribution.amount,
       currency: newContribution.currency,
       message: newContribution.message || undefined,
@@ -132,24 +167,32 @@ export class ContributionService {
     message?: string
     isAnonymous?: boolean
   }): Promise<Contribution> {
+    // Map isAnonymous to correct database column name
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    }
+    
+    if (data.amount !== undefined) updateData.amount = data.amount
+    if (data.message !== undefined) updateData.message = data.message
+    if (data.isAnonymous !== undefined) updateData.is_anonymous = data.isAnonymous
+
     const { data: updated, error } = await supabase
       .from('gift_contributions')
-      .update({
-        ...data,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', contributionId)
-      .select(`
-        *,
-        profiles:contributor_id (
-          display_name,
-          email
-        )
-      `)
+      .select('*')
       .single()
 
     if (error) {
       throw new Error(`Failed to update contribution: ${error.message}`)
+    }
+
+    // Get current user info (updating own contribution)
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    const displayName = currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0]
+    const profile = {
+      display_name: displayName,
+      email: currentUser?.email
     }
 
     return {
@@ -158,8 +201,8 @@ export class ContributionService {
       contributorId: updated.contributor_id,
       contributorName: updated.is_anonymous 
         ? 'Anonymní přispěvatel' 
-        : (updated.profiles?.display_name || updated.profiles?.email?.split('@')[0] || 'Neznámý'),
-      contributorEmail: updated.is_anonymous ? undefined : updated.profiles?.email,
+        : (profile?.display_name || profile?.email?.split('@')[0] || 'Já'),
+      contributorEmail: updated.is_anonymous ? undefined : profile?.email,
       amount: updated.amount,
       currency: updated.currency,
       message: updated.message || undefined,
@@ -213,30 +256,39 @@ export class ContributionService {
 
   // Get contribution messages for a gift
   static async getContributionMessages(giftId: string): Promise<ContributionMessage[]> {
-    const { data, error } = await supabase
+    // Get messages
+    const { data: messages, error: messagesError } = await supabase
       .from('gift_contribution_messages')
-      .select(`
-        *,
-        profiles:sender_id (
-          display_name,
-          email
-        )
-      `)
+      .select('*')
       .eq('gift_id', giftId)
       .order('created_at', { ascending: true })
 
-    if (error) {
-      throw new Error(`Failed to fetch messages: ${error.message}`)
+    if (messagesError) {
+      throw new Error(`Failed to fetch messages: ${messagesError.message}`)
     }
 
-    return data.map(message => ({
-      id: message.id,
-      giftId: message.gift_id,
-      senderId: message.sender_id,
-      senderName: message.profiles?.display_name || message.profiles?.email?.split('@')[0] || 'Neznámý',
-      message: message.message,
-      createdAt: new Date(message.created_at)
-    }))
+    if (!messages || messages.length === 0) {
+      return []
+    }
+
+    // Get sender profiles
+    const senderIds = [...new Set(messages.map(m => m.sender_id))]
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, display_name, email')
+      .in('id', senderIds)
+
+    return messages.map(message => {
+      const profile = profiles?.find(p => p.id === message.sender_id)
+      return {
+        id: message.id,
+        giftId: message.gift_id,
+        senderId: message.sender_id,
+        senderName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
+        message: message.message,
+        createdAt: new Date(message.created_at)
+      }
+    })
   }
 
   // Send a message to other contributors
@@ -253,24 +305,25 @@ export class ContributionService {
         sender_id: user.user.id,
         message: message.trim()
       })
-      .select(`
-        *,
-        profiles:sender_id (
-          display_name,
-          email
-        )
-      `)
+      .select('*')
       .single()
 
     if (error) {
       throw new Error(`Failed to send message: ${error.message}`)
     }
 
+    // Get sender profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, email')
+      .eq('id', user.user.id)
+      .single()
+
     return {
       id: newMessage.id,
       giftId: newMessage.gift_id,
       senderId: newMessage.sender_id,
-      senderName: newMessage.profiles?.display_name || newMessage.profiles?.email?.split('@')[0] || 'Neznámý',
+      senderName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
       message: newMessage.message,
       createdAt: new Date(newMessage.created_at)
     }
@@ -298,18 +351,19 @@ export class ContributionService {
 
     const { data, error } = await supabase
       .from('gift_contributions')
-      .select(`
-        *,
-        profiles:contributor_id (
-          display_name,
-          email
-        )
-      `)
+      .select('*')
       .eq('gift_id', giftId)
       .eq('contributor_id', user.user.id)
       .single()
 
     if (error) return null
+
+    // Get profile data
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, email')
+      .eq('id', user.user.id)
+      .single()
 
     return {
       id: data.id,
@@ -317,8 +371,8 @@ export class ContributionService {
       contributorId: data.contributor_id,
       contributorName: data.is_anonymous 
         ? 'Anonymní přispěvatel' 
-        : (data.profiles?.display_name || data.profiles?.email?.split('@')[0] || 'Neznámý'),
-      contributorEmail: data.is_anonymous ? undefined : data.profiles?.email,
+        : (profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý'),
+      contributorEmail: data.is_anonymous ? undefined : profile?.email,
       amount: data.amount,
       currency: data.currency,
       message: data.message || undefined,
