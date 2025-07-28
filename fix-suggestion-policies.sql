@@ -15,7 +15,8 @@ CREATE POLICY "View group gift suggestions" ON public.group_gift_suggestions
     AND
     -- Gift is from a public wishlist
     gift_id IN (
-      SELECT g.id FROM public.gifts g
+      SELECT g.id 
+      FROM public.gifts g
       JOIN public.wishlists w ON g.wishlist_id = w.id
       WHERE w.is_public = true
     )
