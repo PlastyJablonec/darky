@@ -32,7 +32,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         setLoading(true)
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (mounted) {
           if (error) {
             console.error('Error getting session:', error)
@@ -56,17 +56,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.email || 'No user')
-        
+
         if (mounted) {
           setSession(session)
           setUser(session?.user ?? null)
           setLoading(false)
-          
+
           // Po úspěšném přihlášení přesměrovat pouze pokud jsme na callback stránce
           if (event === 'SIGNED_IN' && session?.user && window.location.pathname === '/auth/callback') {
             const urlParams = new URLSearchParams(window.location.search)
             const returnTo = urlParams.get('returnTo') || '/wishlists'
-            
+
             // Malé zpoždění pro jistotu
             setTimeout(() => {
               window.location.href = returnTo
@@ -108,23 +108,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithGoogle = async () => {
     // Zachovat současnou URL pro návrat
     const currentUrl = window.location.href
-    const returnTo = currentUrl.includes('/login') || currentUrl.includes('/register') 
+    const returnTo = currentUrl.includes('/login') || currentUrl.includes('/register')
       ? new URLSearchParams(window.location.search).get('returnTo') || '/wishlists'
       : window.location.pathname + window.location.search
 
-    // Pro lokální vývoj použij produkční URL ale označit že chceme návrat na localhost
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    const redirectOrigin = isLocalhost 
-      ? 'https://darky-seznam.vercel.app' 
-      : window.location.origin
-
-    // Přidat dev flag pro localhost
-    const devFlag = isLocalhost ? '&dev=true' : ''
+    // Použít aktuální origin pro redirect
+    const redirectOrigin = window.location.origin
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${redirectOrigin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}${devFlag}`,
+        redirectTo: `${redirectOrigin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
       },
     })
 

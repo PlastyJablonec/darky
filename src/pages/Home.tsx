@@ -6,22 +6,22 @@ export function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex flex-col">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="py-8">
-          <div className="flex items-center justify-between">
+        <header className="py-4 sm:py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
             <div className="flex items-center space-x-2">
-              <Gift className="h-10 w-10 text-primary-600" />
-              <h1 className="text-3xl font-bold text-gray-900">DárekList</h1>
+              <Gift className="h-8 w-8 sm:h-10 sm:w-10 text-primary-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">DárekList</h1>
             </div>
-            <div className="space-x-4">
+            <div className="flex space-x-3 sm:space-x-4 w-full sm:w-auto justify-center">
               <Link
                 to="/login"
-                className="btn-outline"
+                className="btn-outline text-sm sm:text-base px-4 py-2"
               >
                 Přihlásit se
               </Link>
               <Link
                 to="/register"
-                className="btn-primary"
+                className="btn-primary text-sm sm:text-base px-4 py-2"
               >
                 Registrovat se
               </Link>
@@ -37,7 +37,7 @@ export function Home() {
               <span className="text-primary-600">jednoduše a elegantně</span>
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 max-w-3xl mx-auto px-4">
-              Vytvářejte seznamy přání, sdílejte je s přáteli a rodinou, 
+              Vytvářejte seznamy přání, sdílejte je s přáteli a rodinou,
               a koordinujte dárky pro každou příležitost.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 px-4">
@@ -59,7 +59,7 @@ export function Home() {
                 Vytvářejte seznamy
               </h3>
               <p className="text-gray-600">
-                Jednoduše přidávejte dárky, které si přejete. 
+                Jednoduše přidávejte dárky, které si přejete.
                 Včetně fotek, cen a odkazů na e-shopy.
               </p>
             </div>
@@ -72,7 +72,7 @@ export function Home() {
                 Sdílejte s ostatními
               </h3>
               <p className="text-gray-600">
-                Pošlete odkaz na svůj seznam přáním přátelům a rodině. 
+                Pošlete odkaz na svůj seznam přáním přátelům a rodině.
                 Oni si mohou rezervovat dárky.
               </p>
             </div>
@@ -85,7 +85,7 @@ export function Home() {
                 Koordinujte dárky
               </h3>
               <p className="text-gray-600">
-                Vyhnete se duplicitním dárkům. Všichni vědí, 
+                Vyhnete se duplicitním dárkům. Všichni vědí,
                 co už bylo koupeno nebo rezervováno.
               </p>
             </div>
@@ -126,7 +126,7 @@ export function Home() {
                   Skupinové dárky
                 </h4>
                 <p className="text-gray-600">
-                  Umožněte více lidem přispět na jeden větší dárek. 
+                  Umožněte více lidem přispět na jeden větší dárek.
                   Perfektní pro drahé věci.
                 </p>
               </div>
@@ -134,7 +134,7 @@ export function Home() {
           </div>
         </main>
       </div>
-      
+
       <Footer />
     </div>
   )

@@ -52,11 +52,11 @@ export function WishlistDetail() {
 
   const loadSuggestions = async () => {
     if (!isOwner || !gifts.length) return
-    
+
     try {
       setLoadingSuggestions(true)
       const suggestionData: { [giftId: string]: GiftSuggestion[] } = {}
-      
+
       for (const gift of gifts) {
         if (!gift.is_group_gift) {
           const giftSuggestions = await suggestionService.getGiftSuggestions(gift.id)
@@ -65,7 +65,7 @@ export function WishlistDetail() {
           }
         }
       }
-      
+
       setSuggestions(suggestionData)
     } catch (error) {
       console.error('Error loading suggestions:', error)
@@ -122,7 +122,7 @@ export function WishlistDetail() {
   useEffect(() => {
     async function fetchShareInfo() {
       if (!wishlist || !isOwner) return
-      
+
       try {
         const info = await ShareService.getShareInfo(wishlist.id)
         setShareInfo(info)
@@ -225,20 +225,20 @@ export function WishlistDetail() {
     <Layout>
       <div className="space-y-6">
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 sm:space-x-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start space-x-2 sm:space-x-4">
             <Link
               to="/wishlists"
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-manipulation flex-shrink-0 mt-1"
             >
               <ArrowLeft className="h-5 w-5 text-gray-500" />
             </Link>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{wishlist.title}</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 break-words">{wishlist.title}</h1>
               {wishlist.description && (
-                <p className="text-gray-600 mt-1">{wishlist.description}</p>
+                <p className="text-gray-600 mt-1 break-words">{wishlist.description}</p>
               )}
-              <div className="flex items-center space-x-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 {wishlist.is_public && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <Share2 className="h-3 w-3 mr-1" />
@@ -261,7 +261,7 @@ export function WishlistDetail() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-y-0 sm:space-x-3 pl-11 sm:pl-0">
             {wishlist.is_public && wishlist.share_id && (
               <ShareButtons
                 wishlistTitle={wishlist.title}
@@ -270,12 +270,12 @@ export function WishlistDetail() {
                 onShare={(platform) => console.log('Sdíleno na:', platform)}
               />
             )}
-            
+
             {isOwner && (
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => setShowAccessControl(true)}
-                  className="btn-outline flex items-center space-x-2"
+                  className="btn-outline flex items-center justify-center space-x-2 w-full sm:w-auto"
                   title="Spravovat přístupy uživatelů"
                 >
                   <Shield className="h-5 w-5" />
@@ -283,7 +283,7 @@ export function WishlistDetail() {
                 </button>
                 <button
                   onClick={() => setIsGiftModalOpen(true)}
-                  className="btn-primary flex items-center space-x-2"
+                  className="btn-primary flex items-center justify-center space-x-2 w-full sm:w-auto"
                 >
                   <Plus className="h-5 w-5" />
                   <span>Přidat dárek</span>
@@ -305,12 +305,12 @@ export function WishlistDetail() {
             <p className="text-blue-700 text-sm">
               Uživatelé navrhli, aby se tyto dárky staly skupinovými. Můžete je schválit nebo odmítnout.
             </p>
-            
+
             <div className="space-y-3">
               {Object.entries(suggestions).map(([giftId, giftSuggestions]) => {
                 const gift = gifts.find(g => g.id === giftId)
                 if (!gift) return null
-                
+
                 return (
                   <div key={giftId} className="bg-white border border-blue-200 rounded-lg p-4">
                     <div className="flex items-start justify-between">
@@ -417,7 +417,7 @@ export function WishlistDetail() {
                 Smazat dárek
               </h3>
               <p className="text-gray-600 mb-6">
-                Opravdu chcete smazat dárek "{deletingGift.title}"? 
+                Opravdu chcete smazat dárek "{deletingGift.title}"?
                 Tato akce je nevratná.
               </p>
               <div className="flex space-x-3">
