@@ -20,15 +20,17 @@ interface EnhancedGiftCardProps {
   onDelete?: (gift: Gift) => void
   onReserve?: (gift: Gift) => void
   onUnreserve?: (gift: Gift) => void
+  showReserved?: boolean
 }
 
-export function EnhancedGiftCard({ 
-  gift, 
-  isOwner, 
-  onEdit, 
-  onDelete, 
-  onReserve, 
-  onUnreserve 
+export function EnhancedGiftCard({
+  gift,
+  isOwner,
+  onEdit,
+  onDelete,
+  onReserve,
+  onUnreserve,
+  showReserved = false
 }: EnhancedGiftCardProps) {
   const { user } = useAuth()
   const [showAuthDialog, setShowAuthDialog] = useState(false)
@@ -128,7 +130,7 @@ export function EnhancedGiftCard({
         isAnonymous
       })
     }
-    
+
     // If there's a message and user is not anonymous, also send it to chat
     if (message && message.trim() && !isAnonymous) {
       try {
@@ -138,14 +140,14 @@ export function EnhancedGiftCard({
         // Don't fail the whole operation if chat message fails
       }
     }
-    
+
     // Reload data
     await loadGroupGiftData()
   }
 
   const handleDeleteContribution = async () => {
     if (!userContribution) return
-    
+
     if (confirm('Opravdu chcete zrušit svůj příspěvek?')) {
       try {
         await contributionService.deleteContribution(userContribution.id)
@@ -171,7 +173,7 @@ export function EnhancedGiftCard({
     try {
       // First suggest (agree with the proposal)
       await suggestionService.suggestGroupGift(gift.id)
-      
+
       // Check if we should convert to group gift (e.g., after 2+ suggestions)
       const count = await suggestionService.getSuggestionCount(gift.id)
       if (count >= 2) {
@@ -247,9 +249,8 @@ export function EnhancedGiftCard({
   }
 
   return (
-    <div className={`card hover:shadow-md transition-all duration-200 flex flex-col h-full ${
-      gift.is_reserved && !isOwner ? 'opacity-75 bg-gray-50' : ''
-    }`}>
+    <div className={`card hover:shadow-md transition-all duration-200 flex flex-col h-full ${gift.is_reserved && (!isOwner || showReserved) ? 'opacity-75 bg-gray-50' : ''
+      }`}>
       {gift.image_url && (
         <div className="relative">
           <OptimizedImage
@@ -260,7 +261,7 @@ export function EnhancedGiftCard({
             objectFit="cover"
             clickable={true}
           />
-          {gift.is_reserved && !isOwner && (
+          {gift.is_reserved && (!isOwner || showReserved) && (
             <div className="absolute inset-0 bg-black bg-opacity-30 rounded-t-lg flex items-center justify-center">
               <span className="bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-medium">
                 {gift.is_group_gift ? 'Plně financováno' : 'Rezervováno'}
@@ -269,46 +270,45 @@ export function EnhancedGiftCard({
           )}
         </div>
       )}
-      
+
       <div className="card-header flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-h-0">
             <h3 className="text-lg font-semibold text-gray-900 mb-1">
               {gift.title}
             </h3>
-            
+
             {gift.description && (
               <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                 {gift.description}
               </p>
             )}
-            
+
             <div className="flex items-center space-x-2 mb-2">
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(gift.priority)}`}>
                 {getPriorityLabel(gift.priority)}
               </span>
-              
+
               {gift.is_group_gift && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                   <Users className="h-3 w-3 mr-1" />
                   Skupinový
                 </span>
               )}
-              
+
               {displayPrice()}
             </div>
-            
+
             {gift.product_url && (
               <a
                 href={gift.product_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleProductUrlClick}
-                className={`inline-flex items-center text-sm transition-colors relative group ${
-                  user 
-                    ? 'text-primary-600 hover:text-primary-700' 
+                className={`inline-flex items-center text-sm transition-colors relative group ${user
+                    ? 'text-primary-600 hover:text-primary-700'
                     : 'text-gray-400 cursor-pointer hover:text-primary-600'
-                }`}
+                  }`}
               >
                 {user ? (
                   <ExternalLink className="h-4 w-4 mr-1" />
@@ -366,7 +366,7 @@ export function EnhancedGiftCard({
                       <span>Rezervovat</span>
                     </button>
                   )}
-                  
+
                   {canUnreserve && onUnreserve && (
                     <button
                       onClick={() => onUnreserve(gift)}
@@ -384,7 +384,7 @@ export function EnhancedGiftCard({
                     </div>
                   )}
                 </div>
-                
+
                 {/* Suggest Group Gift Option */}
                 {!gift.is_reserved && gift.price && gift.price > 1000 && (
                   <div className="space-y-2">
@@ -417,7 +417,7 @@ export function EnhancedGiftCard({
                         </button>
                       </div>
                     )}
-                    
+
                     {/* Show suggestions from others */}
                     {suggestionCount > 0 && !hasUserSuggested && (
                       <button
@@ -440,7 +440,7 @@ export function EnhancedGiftCard({
                 {(!gift.price || gift.price <= 0) && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm">
                     <p className="text-yellow-800">
-                      ⚠️ Tento skupinový dárek nemá nastavenou cílovou cenu. 
+                      ⚠️ Tento skupinový dárek nemá nastavenou cílovou cenu.
                       Kontaktujte vlastníka seznamu.
                     </p>
                   </div>
@@ -452,14 +452,13 @@ export function EnhancedGiftCard({
                     <>
                       <button
                         onClick={() => handleAuthAction('přispět na dárek', () => setShowContributeModal(true))}
-                        className={`flex items-center space-x-2 ${hasContributed ? 'flex-1' : 'flex-1'} ${
-                          hasContributed ? 'btn-outline' : 'btn-primary'
-                        }`}
+                        className={`flex items-center space-x-2 ${hasContributed ? 'flex-1' : 'flex-1'} ${hasContributed ? 'btn-outline' : 'btn-primary'
+                          }`}
                       >
                         <Plus className="h-4 w-4" />
                         <span>{hasContributed ? 'Upravit příspěvek' : 'Přispět'}</span>
                       </button>
-                      
+
                       {hasContributed && (
                         <button
                           onClick={() => handleDeleteContribution()}
@@ -498,8 +497,8 @@ export function EnhancedGiftCard({
       {/* Group Gift Progress */}
       {gift.is_group_gift && !isOwner && groupSummary && (
         <div className="px-6 pb-4">
-          <GroupGiftProgress 
-            summary={groupSummary} 
+          <GroupGiftProgress
+            summary={groupSummary}
             showContributors={true}
           />
         </div>
@@ -511,15 +510,15 @@ export function EnhancedGiftCard({
           <ContributorChat giftId={gift.id} />
         </div>
       )}
-      
-      {gift.is_reserved && !isOwner && (
+
+      {gift.is_reserved && (!isOwner || showReserved) && (
         <div className="card-footer">
           <div className="text-xs text-gray-500">
             {gift.is_group_gift ? 'Plně financováno' : 'Rezervováno'} {gift.reserved_at && new Date(gift.reserved_at).toLocaleDateString('cs-CZ')}
           </div>
         </div>
       )}
-      
+
       {/* Modals */}
       <AuthDialog
         isOpen={showAuthDialog}

@@ -59,7 +59,7 @@ export function useWishlists() {
           if (payload.eventType === 'INSERT') {
             setWishlists(prev => [payload.new as Wishlist, ...prev])
           } else if (payload.eventType === 'UPDATE') {
-            setWishlists(prev => prev.map(w => 
+            setWishlists(prev => prev.map(w =>
               w.id === payload.new.id ? payload.new as Wishlist : w
             ))
           } else if (payload.eventType === 'DELETE') {
@@ -80,6 +80,7 @@ export function useWishlists() {
     description?: string
     imageUrl?: string
     isPublic?: boolean
+    type?: 'personal' | 'managed'
   }) => {
     if (!user) throw new Error('Musíte být přihlášeni')
 
@@ -90,6 +91,7 @@ export function useWishlists() {
       image_url: wishlistData.imageUrl || null,
       is_public: wishlistData.isPublic || false,
       share_id: wishlistData.isPublic ? wishlistService.generateShareId() : null,
+      type: wishlistData.type || 'personal',
     })
 
     // Okamžitě přidat do lokálního stavu
@@ -112,7 +114,7 @@ export function useWishlists() {
     })
 
     // Okamžitě aktualizovat lokální stav
-    setWishlists(prev => prev.map(w => 
+    setWishlists(prev => prev.map(w =>
       w.id === id ? updatedWishlist : w
     ))
 
@@ -121,19 +123,19 @@ export function useWishlists() {
 
   const deleteWishlist = async (id: string) => {
     await wishlistService.deleteWishlist(id)
-    
+
     // Okamžitě odstranit z lokálního stavu
     setWishlists(prev => prev.filter(w => w.id !== id))
   }
 
   const togglePublic = async (id: string, isPublic: boolean) => {
     const updatedWishlist = await wishlistService.togglePublic(id, isPublic)
-    
+
     // Okamžitě aktualizovat lokální stav
-    setWishlists(prev => prev.map(w => 
+    setWishlists(prev => prev.map(w =>
       w.id === id ? updatedWishlist : w
     ))
-    
+
     return updatedWishlist
   }
 

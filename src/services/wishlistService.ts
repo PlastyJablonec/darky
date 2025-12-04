@@ -83,8 +83,8 @@ export const wishlistService = {
   },
 
   generateShareId(): string {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15)
+    return Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15)
   },
 
   async togglePublic(id: string, isPublic: boolean): Promise<Wishlist> {
@@ -100,6 +100,18 @@ export const wishlistService = {
     const { data, error } = await supabase
       .from('wishlists')
       .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateWishlistType(id: string, type: 'personal' | 'managed'): Promise<Wishlist> {
+    const { data, error } = await supabase
+      .from('wishlists')
+      .update({ type, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()

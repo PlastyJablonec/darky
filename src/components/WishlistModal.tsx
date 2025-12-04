@@ -14,6 +14,7 @@ interface WishlistModalProps {
     description?: string
     imageUrl?: string
     isPublic?: boolean
+    type?: 'personal' | 'managed'
   }) => Promise<void>
   title: string
   initialData?: Wishlist
@@ -32,6 +33,7 @@ export function WishlistModal({
     description: '',
     imageUrl: '',
     isPublic: false,
+    type: 'personal' as 'personal' | 'managed',
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -43,6 +45,7 @@ export function WishlistModal({
         description: initialData.description || '',
         imageUrl: initialData.image_url || '',
         isPublic: initialData.is_public,
+        type: (initialData.type as 'personal' | 'managed') || 'personal',
       })
     } else {
       setFormData({
@@ -50,6 +53,7 @@ export function WishlistModal({
         description: '',
         imageUrl: '',
         isPublic: false,
+        type: 'personal',
       })
     }
     setError('')
@@ -65,7 +69,7 @@ export function WishlistModal({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }))
-    
+
     if (error) setError('')
   }
 
@@ -97,7 +101,7 @@ export function WishlistModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.title.trim()) {
       setError('Název je povinný')
       return
@@ -112,6 +116,7 @@ export function WishlistModal({
         description: formData.description.trim() || undefined,
         imageUrl: formData.imageUrl.trim() || undefined,
         isPublic: formData.isPublic,
+        type: formData.type,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Chyba při ukládání')
@@ -183,7 +188,7 @@ export function WishlistModal({
               currentImageUrl={formData.imageUrl}
               placeholder="Nahrajte obrázek nebo zadejte URL"
             />
-            
+
             <div className="mt-2">
               <label htmlFor="imageUrl" className="block text-xs text-gray-600 mb-1">
                 Nebo zadejte URL obrázku:
@@ -197,6 +202,52 @@ export function WishlistModal({
                 className="input text-sm"
                 placeholder="https://example.com/image.jpg"
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Typ seznamu
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-start">
+                <input
+                  type="radio"
+                  id="type_personal"
+                  name="type"
+                  value="personal"
+                  checked={formData.type === 'personal'}
+                  onChange={handleChange}
+                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                />
+                <label htmlFor="type_personal" className="ml-2 block">
+                  <span className="block text-sm font-medium text-gray-900">
+                    Osobní (překvapení)
+                  </span>
+                  <span className="block text-sm text-gray-500">
+                    Nevidíte, které dárky jsou rezervované. Ideální pro vaše vlastní přání.
+                  </span>
+                </label>
+              </div>
+              <div className="flex items-start">
+                <input
+                  type="radio"
+                  id="type_managed"
+                  name="type"
+                  value="managed"
+                  checked={formData.type === 'managed'}
+                  onChange={handleChange}
+                  className="mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                />
+                <label htmlFor="type_managed" className="ml-2 block">
+                  <span className="block text-sm font-medium text-gray-900">
+                    Spravovaný (přehled)
+                  </span>
+                  <span className="block text-sm text-gray-500">
+                    Vidíte všechny rezervace. Vhodné pro seznamy dětí nebo jiných osob.
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
 

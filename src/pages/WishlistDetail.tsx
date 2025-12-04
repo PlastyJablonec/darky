@@ -40,6 +40,7 @@ export function WishlistDetail() {
   const [suggestions, setSuggestions] = useState<{ [giftId: string]: GiftSuggestion[] }>({})
   const [, setLoadingSuggestions] = useState(false)
   const [showAccessControl, setShowAccessControl] = useState(false)
+  const [showConvertDialog, setShowConvertDialog] = useState(false)
 
   const isOwner = wishlist?.user_id === user?.id
 
@@ -197,6 +198,18 @@ export function WishlistDetail() {
     }
   }
 
+  const handleConvertToManaged = async () => {
+    if (!wishlist) return
+
+    try {
+      const updated = await wishlistService.updateWishlistType(wishlist.id, 'managed')
+      setWishlist(updated)
+      setShowConvertDialog(false)
+    } catch (error) {
+      console.error('Error converting wishlist:', error)
+      alert('Chyba při převádění seznamu: ' + (error instanceof Error ? error.message : 'Neznámá chyba'))
+    }
+  }
 
   if (loading) {
     return (
@@ -273,6 +286,21 @@ export function WishlistDetail() {
 
             {isOwner && (
               <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex items-center mr-2">
+                  {wishlist.type === 'managed' ? (
+                    <span className="text-sm text-green-600 font-medium flex items-center">
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Spravovaný seznam
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setShowConvertDialog(true)}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Převést na spravovaný seznam
+                    </button>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowAccessControl(true)}
                   className="btn-outline flex items-center justify-center space-x-2 w-full sm:w-auto"
@@ -390,6 +418,7 @@ export function WishlistDetail() {
                 onDelete={(gift) => setDeletingGift(gift)}
                 onReserve={handleReserveGift}
                 onUnreserve={handleUnreserveGift}
+                showReserved={wishlist.type === 'managed'}
               />
             ))}
           </div>
@@ -444,6 +473,43 @@ export function WishlistDetail() {
             wishlistId={wishlist.id}
             onClose={() => setShowAccessControl(false)}
           />
+        )}
+
+        {/* Convert Dialog */}
+        {showConvertDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Převést na spravovaný seznam?
+              </h3>
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      Tato akce je <strong>nevratná</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Jako vlastník seznamu uvidíte všechny rezervace u dárků. Toto je vhodné, pokud spravujete seznam pro někoho jiného (např. pro dítě) a potřebujete mít přehled o tom, co kdo koupil.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowConvertDialog(false)}
+                  className="btn-outline flex-1"
+                >
+                  Zrušit
+                </button>
+                <button
+                  onClick={handleConvertToManaged}
+                  className="btn-primary flex-1"
+                >
+                  Převést navždy
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </Layout>

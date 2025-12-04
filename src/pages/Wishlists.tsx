@@ -28,6 +28,7 @@ export function Wishlists() {
     description?: string
     imageUrl?: string
     isPublic?: boolean
+    type?: 'personal' | 'managed'
   }) => {
     try {
       await createWishlist(data)
@@ -173,7 +174,7 @@ export function Wishlists() {
                 Smazat seznam
               </h3>
               <p className="text-gray-600 mb-6">
-                Opravdu chcete smazat seznam "{deletingWishlist.title}"? 
+                Opravdu chcete smazat seznam "{deletingWishlist.title}"?
                 Tato akce je nevratná a smaže také všechny dárky v tomto seznamu.
               </p>
               <div className="flex space-x-3">
