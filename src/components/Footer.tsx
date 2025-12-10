@@ -16,7 +16,7 @@ export function Footer() {
               <span className="font-bold text-xl text-gray-900">DárekList</span>
             </div>
             <p className="text-gray-600 mb-4">
-              Aplikace pro správu seznamů přání s funkcí sdílení. 
+              Aplikace pro správu seznamů přání s funkcí sdílení.
               Vytvářejte seznamy, sdílejte je s přáteli a koordinujte dárky pro každou příležitost.
             </p>
             <div className="flex items-center space-x-1 text-sm text-gray-500">
@@ -50,6 +50,11 @@ export function Footer() {
                   Registrace
                 </Link>
               </li>
+              <li>
+                <Link to="/about" className="text-gray-600 hover:text-primary-600 transition-colors">
+                  O aplikaci
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -81,12 +86,12 @@ export function Footer() {
             <div className="text-sm text-gray-600">
               © {new Date().getFullYear()} DárekList. Všechna práva vyhrazena.
             </div>
-            
+
             <div className="flex items-center space-x-1 text-sm text-gray-600">
               <span>Vytvořil</span>
-              <a 
-                href="https://ivanvondracek.github.io/" 
-                target="_blank" 
+              <a
+                href="https://ivanvondracek.github.io/"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-primary-600 hover:text-primary-700 transition-colors flex items-center space-x-1"
               >

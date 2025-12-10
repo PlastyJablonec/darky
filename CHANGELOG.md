@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.0] - 2025-12-10
+### Added
+- **About Page**: New page explaining how the app works (`/about`).
+- **Shared Wishlist Assurance**: Friendly message for guests on Personal wishlists ("Pssst!").
+- **Managed Wishlist Indicator**: Clear info box for owners of Managed wishlists.
+
+### Changed
+- **README**: Completely rewritten documentation with better "How to" and feature descriptions.
+- **Footer**: Added link to "O aplikaci".
+
 ## [1.2.0] - 2025-12-04
 ### Added
 - **Wishlist Types**: Support for "Personal" and "Managed" wishlists.

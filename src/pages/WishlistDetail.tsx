@@ -321,6 +321,25 @@ export function WishlistDetail() {
           </div>
         </div>
 
+        {wishlist.type === 'managed' && isOwner && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 max-w-full">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <Shield className="h-5 w-5 text-blue-400" aria-hidden="true" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">Spravovaný seznam</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>
+                    Jako správce tohoto seznamu <strong>vidíte všechny rezervace</strong>.
+                    To vám umožňuje koordinovat dárky (např. pro děti), ale přicházíte o překvapení.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Group Gift Suggestions Section for Owner */}
         {isOwner && Object.keys(suggestions).length > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">

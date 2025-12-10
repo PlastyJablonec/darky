@@ -10,6 +10,7 @@ import { WishlistDetail } from '@/pages/WishlistDetail'
 import { SharedWishlist } from '@/pages/SharedWishlist'
 import { SharedWithMe } from '@/pages/SharedWithMe'
 import { AuthCallback } from '@/pages/AuthCallback'
+import { About } from '@/pages/About'
 import { runProductionDiagnostics } from '@/utils/debug'
 
 function App() {
@@ -36,7 +37,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
+
       <Route
         path="/wishlists"
         element={
@@ -45,7 +46,7 @@ function App() {
           </ProtectedRoute>
         }
       />
-      
+
       <Route
         path="/wishlists/:id"
         element={
@@ -63,10 +64,11 @@ function App() {
           </ProtectedRoute>
         }
       />
-      
+
       <Route path="/shared/:shareId" element={<SharedWishlist />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      
+      <Route path="/about" element={<About />} />
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

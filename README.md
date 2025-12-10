@@ -1,132 +1,89 @@
-# DárekList
+# 🎁 DárekList
 
-Moderní webová aplikace pro správu a sdílení seznamů přání. Umožňuje uživatelům vytvářet seznamy dárků, sdílet je s rodinou a přáteli a koordinovat nákupy, aby se předešlo duplicitním dárkům.
+**Moderní aplikace pro správu a sdílení seznamů přání.**
 
-## 🚀 Funkce
+Už žádné nechtěné dárky nebo trapné situace, kdy dostanete to samé dvakrát. S DárekListem vytvoříte seznam, sdílíte ho s blízkými a oni si dárky jednoduše zarezervují.
 
-- **Správa seznamů přání**: Vytvářejte neomezené množství seznamů pro různé příležitosti (Vánoce, Narozeniny, Svatba...).
-- **Sdílení**: Sdílejte seznamy pomocí unikátního odkazu.
-- **Rezervace dárků**: Přátelé mohou dárky rezervovat, takže ostatní vidí, co je již zabrané (majitel seznamu rezervace nevidí, aby nepřišel o překvapení).
-- **Skupinové dárky**: Možnost označit dražší dárky jako "skupinové", na které se může složit více lidí.
-- **Responzivní design**: Plně funkční na mobilech, tabletech i počítačích.
-- **Google Přihlášení**: Rychlé a bezpečné přihlášení pomocí Google účtu.
+## ✨ Klíčové Funkce
 
-## 🛠️ Technologie
+### 📝 Správa Seznamů
+- **Neomezené seznamy**: Vytvořte si seznam pro každou příležitost – Vánoce, Narozeniny, Svatba nebo jen tak pro radost.
+- **Dva typy seznamů**:
+    - **Osobní**: Klasický seznam pro vaše přání. Vy jako majitel **nevidíte**, kdo a co vám rezervoval. Překvapení zůstává zachováno! 🤫
+    - **Spravovaný**: Ideální pro děti nebo hromadné akce. Jako majitel **vidíte** veškeré rezervace a máte dokonalý přehled o tom, co kdo kupuje.
+- **Snadné přidávání dárků**: Vložte název, odkaz, cenu a obrázek. Dárky můžete řadit podle priority.
+
+### 🤝 Sdílení a Rezervace
+- **Jednoduché sdílení**: Pošlete unikátní odkaz rodině nebo přátelům. Nemusí se registrovat, aby viděli váš seznam.
+- **Rezervace dárků**:
+    - "Ježíšek" si dárek zarezervuje, aby ostatní věděli, že už je zabraný.
+    - Pro rezervaci je nutné přihlášení (aby se vědělo, kdo rezervoval).
+    - U Osobních seznamů majitel rezervaci nevidí.
+    - U Spravovaných seznamů majitel rezervaci vidí.
+
+### 💰 Skupinové Dárky
+- Máte přání, které je dražší? Označte dárek jako **Skupinový**.
+- Ostatní uvidí, že se jedná o větší investici a mohou se domluvit na společném nákupu.
+
+### 📱 Moderní a Responzivní
+- Aplikace je plně optimalizovaná pro **mobily, tablety i počítače**.
+- Nainstalujte si ji jako webovou aplikaci (PWA) přímo na plochu telefonu.
+
+---
+
+## 🛠️ Jak to funguje?
+
+### 1. Vytvořte seznam
+Přihlašte se a vytvořte nový seznam. Zvolte, zda je pro vás (Osobní) nebo pro někoho jiného (Spravovaný).
+
+### 2. Přidejte přání
+Naházejte do seznamu všechno, co by vám udělalo radost. Přidejte odkazy na e-shopy, ať to mají "Ježíšci" jednoduché.
+
+### 3. Sdílejte
+V detailu seznamu klikněte na tlačítko sdílení nebo zkopírujte adresu v prohlížeči. Odkaz pošlete komukoliv.
+
+### 4. Rezervace (pohled obdarovávajícího)
+Když někdo otevře váš odkaz, uvidí seznam dárků. U každého dárku je tlačítko "Rezervovat". Pokud na něj klikne, dárek se označí jako "Zarezervované" pro všechny ostatní návštěvníky, ale vy (pokud jde o Osobní seznam) nic nepoznáte.
+
+---
+
+## 👨‍💻 Technologie
+
+Projekt je postaven na moderním stacku pro maximální rychlost a spolehlivost:
 
 - **Frontend**: React, TypeScript, Vite
-- **Styling**: Tailwind CSS v4, DaisyUI
-- **Backend / Databáze**: Supabase (PostgreSQL, Auth, Realtime)
-- **Ikony**: Lucide React
+- **Styling**: Tailwind CSS, DaisyUI
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
+- **Hosting**: Vercel
 
-## 📦 Instalace a spuštění
+## 🚀 Instalace pro vývojáře
 
-1.  **Naklonujte repozitář:**
+1.  **Klonování repozitáře**
     ```bash
     git clone <url-repozitare>
     cd dareklist-app
     ```
 
-2.  **Nainstalujte závislosti:**
+2.  **Instalace závislostí**
     ```bash
     npm install
     ```
 
-3.  **Nastavte prostředí:**
-    Vytvořte soubor `.env` v kořenovém adresáři a přidejte své Supabase klíče:
+3.  **Konfigurace prostředí**
+    Vytvořte `.env` soubor a nastavte Supabase klíče:
     ```env
-    VITE_SUPABASE_URL=vase_supabase_url
-    VITE_SUPABASE_ANON_KEY=vas_supabase_anon_key
+    VITE_SUPABASE_URL=vas_url
+    VITE_SUPABASE_ANON_KEY=vas_klic
     ```
 
-4.  **Spusťte vývojový server:**
+4.  **Spuštění**
     ```bash
     npm run dev
     ```
-    Aplikace poběží na `http://localhost:3000`.
 
-## 🔧 Build a Nasazení
+---
 
-Pro vytvoření produkčního buildu spusťte:
+## 📝 Licence a Autor
 
-```bash
-npm run build
-```
-
-Soubory se vygenerují do složky `dist`.
-
-Před každým buildem (nebo ručně) se spouští skript `scripts/build-info.js`, který generuje informace o verzi a aktuálním commitu do `public/build-info.json`. Tyto informace se pak zobrazují v patičce aplikace.
-
-## 📱 Mobilní zobrazení
-# DárekList
-
-Moderní webová aplikace pro správu a sdílení seznamů přání. Umožňuje uživatelům vytvářet seznamy dárků, sdílet je s rodinou a přáteli a koordinovat nákupy, aby se předešlo duplicitním dárkům.
-
-## 🚀 Funkce
-
-- **Správa seznamů přání**: Vytvářejte neomezené množství seznamů pro různé příležitosti (Vánoce, Narozeniny, Svatba...).
-- **Sdílení**: Sdílejte seznamy pomocí unikátního odkazu.
-- **Rezervace dárků**: Přátelé mohou dárky rezervovat, takže ostatní vidí, co je již zabrané (majitel seznamu rezervace nevidí, aby nepřišel o překvapení).
-- **Skupinové dárky**: Možnost označit dražší dárky jako "skupinové", na které se může složit více lidí.
-- **Responzivní design**: Plně funkční na mobilech, tabletech i počítačích.
-- **Google Přihlášení**: Rychlé a bezpečné přihlášení pomocí Google účtu.
-
-## 🛠️ Technologie
-
-- **Frontend**: React, TypeScript, Vite
-- **Styling**: Tailwind CSS v4, DaisyUI
-- **Backend / Databáze**: Supabase (PostgreSQL, Auth, Realtime)
-- **Ikony**: Lucide React
-
-## 📦 Instalace a spuštění
-
-1.  **Naklonujte repozitář:**
-    ```bash
-    git clone <url-repozitare>
-    cd dareklist-app
-    ```
-
-2.  **Nainstalujte závislosti:**
-    ```bash
-    npm install
-    ```
-
-3.  **Nastavte prostředí:**
-    Vytvořte soubor `.env` v kořenovém adresáři a přidejte své Supabase klíče:
-    ```env
-    VITE_SUPABASE_URL=vase_supabase_url
-    VITE_SUPABASE_ANON_KEY=vas_supabase_anon_key
-    ```
-
-4.  **Spusťte vývojový server:**
-    ```bash
-    npm run dev
-    ```
-    Aplikace poběží na `http://localhost:3000`.
-
-## 🔧 Build a Nasazení
-
-Pro vytvoření produkčního buildu spusťte:
-
-```bash
-npm run build
-```
-
-Soubory se vygenerují do složky `dist`.
-
-Před každým buildem (nebo ručně) se spouští skript `scripts/build-info.js`, který generuje informace o verzi a aktuálním commitu do `public/build-info.json`. Tyto informace se pak zobrazují v patičce aplikace.
-
-## 📱 Mobilní zobrazení
-
-Aplikace je optimalizována pro mobilní zařízení:
-- Skrývání méně důležitých textů v navigaci.
-- Sticky hlavička pro snadný přístup k menu.
-- Přizpůsobené formuláře a tlačítka pro dotykové ovládání.
-
-- **Typy seznamů**:
-  - **Osobní**: Majitel nevidí rezervace (překvapení).
-  - **Spravovaný**: Majitel vidí rezervace (přehled, např. pro děti).
-
-## 📝 Autor
-
-Ivan Vondráček
-Verze: 1.2.0
+Vytvořil [Ivan Vondráček].
+Aplikace vznikla jako projekt pro usnadnění vánočního shonu. 🎄

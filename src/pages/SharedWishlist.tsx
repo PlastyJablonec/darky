@@ -16,7 +16,7 @@ type Gift = Database['public']['Tables']['gifts']['Row']
 export function SharedWishlist() {
   const { shareId } = useParams<{ shareId: string }>()
   const { user } = useAuth()
-  
+
   const [wishlist, setWishlist] = useState<Wishlist | null>(null)
   const [gifts, setGifts] = useState<Gift[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,16 +29,16 @@ export function SharedWishlist() {
 
       try {
         setLoading(true)
-        
+
         // Načíst veřejný seznam
         const wishlistData = await wishlistService.getPublicWishlist(shareId)
         if (!wishlistData) {
           setError('Seznam nebyl nalezen nebo není veřejný')
           return
         }
-        
+
         setWishlist(wishlistData)
-        
+
         // Načíst dárky
         const giftsData = await giftService.getWishlistGifts(wishlistData.id)
         setGifts(giftsData)
@@ -55,7 +55,7 @@ export function SharedWishlist() {
           }
           await ShareService.updateShareView(wishlistData.id, user.id)
         }
-        
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Chyba při načítání')
       } finally {
@@ -69,7 +69,7 @@ export function SharedWishlist() {
   const handleReserveGift = async (gift: Gift) => {
     try {
       const updatedGift = await giftService.reserveGift(gift.id, user!.id)
-      setGifts(prev => prev.map(g => 
+      setGifts(prev => prev.map(g =>
         g.id === gift.id ? updatedGift : g
       ))
     } catch (error) {
@@ -80,7 +80,7 @@ export function SharedWishlist() {
   const handleUnreserveGift = async (gift: Gift) => {
     try {
       const updatedGift = await giftService.unreserveGift(gift.id)
-      setGifts(prev => prev.map(g => 
+      setGifts(prev => prev.map(g =>
         g.id === gift.id ? updatedGift : g
       ))
     } catch (error) {
@@ -132,7 +132,7 @@ export function SharedWishlist() {
               <Gift className="h-8 w-8 text-primary-600" />
               <span className="font-bold text-xl text-gray-900">DárekList</span>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {!user ? (
                 <>
@@ -171,7 +171,29 @@ export function SharedWishlist() {
                 )}
               </div>
             </div>
-            
+
+            {wishlist.type !== 'managed' && (
+              <div className="max-w-2xl mx-auto mt-6 mb-8">
+                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                  <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-indigo-100 rounded-full opacity-50 blur-xl"></div>
+                  <div className="flex items-start gap-4 relative z-10">
+                    <div className="flex-shrink-0 bg-indigo-100 p-2 rounded-full">
+                      <span className="text-2xl" role="img" aria-label="shush">🤫</span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-indigo-900 mb-1">
+                        Pssst! Nebojte se rezervovat
+                      </h3>
+                      <p className="text-indigo-800 text-sm leading-relaxed">
+                        Majitel tohoto seznamu <strong>nevidí vaše rezervace</strong>.
+                        Můžete si dárky v klidu rozebrat a o překvapení nikdo nepřijde!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-center mt-4">
               <ShareButtons
                 wishlistTitle={wishlist.title}
@@ -234,7 +256,7 @@ export function SharedWishlist() {
               ))}
             </div>
           )}
-          
+
           <div className="text-center text-sm text-gray-500 pt-8 border-t">
             <p>Seznam vytvořen pomocí DárekList</p>
             <Link to="/" className="text-primary-600 hover:text-primary-500">
