@@ -101,7 +101,7 @@ export function About() {
                     </div>
 
                     <div className="relative">
-                        <div className="absolute top-0 bottom-0 left-8 md:search-left-1/2 w-0.5 bg-gray-200 hidden md:block"></div>
+                        <div className="absolute top-0 bottom-0 left-8 md:left-1/2 w-0.5 bg-gray-200 hidden md:block"></div>
 
                         <div className="space-y-12">
                             {[
@@ -160,10 +160,10 @@ export function About() {
 
                                             <div className="hidden md:block">
                                                 {index % 2 !== 0 && (
-                                                    <>
-                                                        <h3 className="text-lg font-bold text-gray-900 -mt-14 mb-2">{step.title}</h3>
+                                                    <div className="md:pl-8">
+                                                        <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
                                                         <p className="text-gray-600">{step.desc}</p>
-                                                    </>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
