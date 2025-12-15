@@ -8,7 +8,7 @@ export const debugLog = (message: string, data?: any) => {
 
 export const debugError = (message: string, error?: any) => {
   console.error(`❌ ERROR: ${message}`, error)
-  
+
   // V produkci pošli error do console pro debugging
   if (window.location.hostname.includes('vercel.app')) {
     console.error('PRODUCTION ERROR:', {
@@ -32,7 +32,7 @@ export const debugSupabase = () => {
 // Komplexní diagnostika produkčního prostředí
 export const runProductionDiagnostics = () => {
   console.group('🔍 PRODUKČNÍ DIAGNOSTIKA')
-  
+
   // Základní info o prostředí
   console.log('📊 Environment Info:', {
     hostname: window.location.hostname,
@@ -62,14 +62,14 @@ export const runProductionDiagnostics = () => {
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY || ''}`
       }
     })
-    .then(response => {
-      console.log('🗄️ Supabase API Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
+      .then(response => {
+        console.log('🗄️ Supabase API Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok
+        })
       })
-    })
-    .catch(err => console.error('🗄️ Supabase API: ERROR', err))
+      .catch(err => console.error('🗄️ Supabase API: ERROR', err))
   }
 
   console.groupEnd()
