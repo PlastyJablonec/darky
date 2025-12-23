@@ -38,11 +38,21 @@ export class AIService {
 
         // List of models to try in order of preference
         const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-2.0-flash-exp', 'gemini-1.5-pro']
+
+        // Diagnostic: Try to list models
+        try {
+            console.log('Provádím diagnostiku: Výpis dostupných modelů...')
+            const modelList = await (this.ai as any).models.list()
+            console.log('Dostupné modely pro tento klíč:', (modelList as any).map((m: any) => m.name))
+        } catch (diagError: any) {
+            console.warn('Nepodařilo se vypsat seznam modelů (možná omezený klíč):', diagError.message)
+        }
+
         let lastError = null
 
         for (const modelName of modelsToTry) {
             try {
-                console.log(`Zkouším AI model: ${modelName}...`)
+                console.log(`Zkouším AI model: ${modelName}... (Klíč začíná na: ${API_KEY?.substring(0, 6)}...)`)
                 const response = await this.ai.models.generateContent({
                     model: modelName,
                     contents: prompt,
@@ -74,22 +84,25 @@ export class AIService {
                 if (!text) throw new Error('AI nevrátila žádnou odpověď.')
 
                 const data = JSON.parse(text)
-                return data.tips || data // Support both wrapped and direct array if AI ignores schema slightly
+                console.log(`Model ${modelName} úspěšně odpověděl!`)
+                return data.tips || data
             } catch (error: any) {
                 console.warn(`Model ${modelName} selhal:`, error.message)
                 lastError = error
-                // If it's not a 404, it might be a payload/auth issue, so maybe don't retry other models?
-                // But for now, let's try all if 404.
-                if (!error.message?.includes('404')) {
-                    // If it's a quota or auth error, stop early
-                    if (error.message?.includes('429') || error.message?.includes('401') || error.message?.includes('403')) {
-                        break
-                    }
+
+                // If quota exceeded or auth error, don't keep trying others that likely share the same quota
+                if (error.message?.includes('429') || error.message?.includes('401') || error.message?.includes('403')) {
+                    break
                 }
             }
         }
 
         console.error('Všechny AI modely selhaly.', lastError)
+
+        if (lastError?.message?.includes('limit: 0') || lastError?.message?.includes('429')) {
+            throw new Error('Vaše AI Project nemá nastavenou kvótu pro tyto modely. Zkontrolujte prosím Google AI Studio (Free Tier vs Pay-as-you-go).')
+        }
+
         throw new Error(`Nepodařilo se najít funkční AI model. Poslední chyba: ${lastError?.message || 'Neznámá chyba'}`)
     }
 }
