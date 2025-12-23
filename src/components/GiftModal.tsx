@@ -20,6 +20,7 @@ interface GiftModalProps {
   }) => Promise<void>
   title: string
   initialData?: Gift
+  aiData?: { title: string; description: string; price?: number }
 }
 
 const PRIORITIES = [
@@ -34,6 +35,7 @@ export function GiftModal({
   onSubmit,
   title,
   initialData,
+  aiData,
 }: GiftModalProps) {
   const [formData, setFormData] = useState({
     title: '',
@@ -58,6 +60,16 @@ export function GiftModal({
         priority: initialData.priority as 'low' | 'medium' | 'high',
         isGroupGift: initialData.is_group_gift,
       })
+    } else if (aiData) {
+      setFormData({
+        title: aiData.title,
+        description: aiData.description || '',
+        price: aiData.price?.toString() || '',
+        productUrl: '',
+        imageUrl: '',
+        priority: 'medium',
+        isGroupGift: false,
+      })
     } else {
       setFormData({
         title: '',
@@ -70,7 +82,7 @@ export function GiftModal({
       })
     }
     setError('')
-  }, [initialData, isOpen])
+  }, [initialData, aiData, isOpen])
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -82,7 +94,7 @@ export function GiftModal({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }))
-    
+
     if (error) setError('')
   }
 
@@ -113,7 +125,7 @@ export function GiftModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.title.trim()) {
       setError('Název je povinný')
       return
@@ -261,7 +273,7 @@ export function GiftModal({
               currentImageUrl={formData.imageUrl}
               placeholder="Nahrajte obrázek dárku"
             />
-            
+
             <div className="mt-2">
               <label htmlFor="imageUrl" className="block text-xs text-gray-600 mb-1">
                 Nebo zadejte URL obrázku:

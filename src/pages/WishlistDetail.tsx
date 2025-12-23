@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X, Shield } from 'lucide-react'
+import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X, Shield, ArrowUpDown, Filter } from 'lucide-react'
 import { Layout } from '@/components/Layout'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { GiftModal } from '@/components/GiftModal'
@@ -11,10 +11,14 @@ import { useGifts } from '@/hooks/useGifts'
 import { wishlistService } from '@/services/wishlistService'
 import { ShareService } from '@/services/shareService'
 import { suggestionService, GiftSuggestion } from '@/services/suggestionService'
+import { AIRecommendations } from '@/components/AIRecommendations'
 import type { Database } from '@/types'
 
 type Wishlist = Database['public']['Tables']['wishlists']['Row']
 type Gift = Database['public']['Tables']['gifts']['Row']
+
+type SortOption = 'date_desc' | 'date_asc' | 'price_asc' | 'price_desc'
+type FilterOption = 'all' | 'available' | 'reserved'
 
 export function WishlistDetail() {
   const { id } = useParams<{ id: string }>()
@@ -41,6 +45,12 @@ export function WishlistDetail() {
   const [, setLoadingSuggestions] = useState(false)
   const [showAccessControl, setShowAccessControl] = useState(false)
   const [showConvertDialog, setShowConvertDialog] = useState(false)
+
+  // Sorting and Filtering State
+  const [sortBy, setSortBy] = useState<SortOption>('date_desc')
+  const [filterBy, setFilterBy] = useState<FilterOption>('all')
+
+  const [aiGiftData, setAiGiftData] = useState<{ title: string; description: string; price?: number } | null>(null)
 
   const isOwner = wishlist?.user_id === user?.id
 
@@ -198,6 +208,12 @@ export function WishlistDetail() {
     }
   }
 
+  const handleAddAIRecommendedGift = (giftData: { title: string; description: string; price?: number }) => {
+    setEditingGift(null)
+    setAiGiftData(giftData)
+    setIsGiftModalOpen(true)
+  }
+
   const handleConvertToManaged = async () => {
     if (!wishlist) return
 
@@ -210,6 +226,32 @@ export function WishlistDetail() {
       alert('Chyba při převádění seznamu: ' + (error instanceof Error ? error.message : 'Neznámá chyba'))
     }
   }
+
+  // Filter and Sort Logic
+  const filteredAndSortedGifts = gifts
+    .filter(gift => {
+      if (filterBy === 'all') return true
+      if (filterBy === 'available') return !gift.is_reserved
+      if (filterBy === 'reserved') return gift.is_reserved
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'date_desc': // Newest first
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        case 'date_asc': // Oldest first
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        case 'price_asc': // Cheapest first
+          // Treat null price as 0 or Infinity? Usually 0 or put at end.
+          // Let's treat null as 0 for "price unknown/low" or maybe max?
+          // Defaulting to 0 for simplicity
+          return (a.price || 0) - (b.price || 0)
+        case 'price_desc': // Most expensive first
+          return (b.price || 0) - (a.price || 0)
+        default:
+          return 0
+      }
+    })
 
   if (loading) {
     return (
@@ -340,6 +382,15 @@ export function WishlistDetail() {
           </div>
         )}
 
+        {/* AI recommendations section */}
+        {isOwner && gifts.length > 0 && (
+          <AIRecommendations
+            gifts={gifts}
+            occasion={wishlist.occasion}
+            onAddGift={handleAddAIRecommendedGift}
+          />
+        )}
+
         {/* Group Gift Suggestions Section for Owner */}
         {isOwner && Object.keys(suggestions).length > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
@@ -394,6 +445,50 @@ export function WishlistDetail() {
           </div>
         )}
 
+        {/* Filter Bar */}
+        {!giftsLoading && !giftsError && gifts.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100 gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              {/* Filter - Visible only to visitors or managed list owners */}
+              {(!isOwner || wishlist.type === 'managed') && (
+                <div className="flex items-center space-x-2">
+                  <Filter className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-600 sm:hidden">Filtr:</span>
+                  <select
+                    value={filterBy}
+                    onChange={(e) => setFilterBy(e.target.value as FilterOption)}
+                    className="block w-full sm:w-40 pl-3 pr-8 py-1.5 text-sm font-sans border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white text-gray-900"
+                  >
+                    <option value="all">Všechny dárky</option>
+                    <option value="available">K dispozici</option>
+                    <option value="reserved">Rezervované</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Sort - Always visible */}
+              <div className="flex items-center space-x-2">
+                <ArrowUpDown className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600 sm:hidden">Řazení:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="block w-full sm:w-40 pl-3 pr-8 py-1.5 text-sm font-sans border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white text-gray-900"
+                >
+                  <option value="date_desc">Nejnovější</option>
+                  <option value="date_asc">Nejstarší</option>
+                  <option value="price_asc">Od nejlevnějšího</option>
+                  <option value="price_desc">Od nejdražšího</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-500 hidden sm:block font-sans">
+              {filteredAndSortedGifts.length} {filteredAndSortedGifts.length === 1 ? 'dárek' : filteredAndSortedGifts.length >= 2 && filteredAndSortedGifts.length <= 4 ? 'dárky' : 'dárků'}
+            </div>
+          </div>
+        )}
+
         {giftsLoading ? (
           <div className="flex items-center justify-center min-h-64">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600"></div>
@@ -428,7 +523,7 @@ export function WishlistDetail() {
           </div>
         ) : (
           <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {gifts.map((gift) => (
+            {filteredAndSortedGifts.map((gift) => (
               <EnhancedGiftCard
                 key={gift.id}
                 gift={gift}
@@ -445,9 +540,13 @@ export function WishlistDetail() {
 
         <GiftModal
           isOpen={isGiftModalOpen}
-          onClose={() => setIsGiftModalOpen(false)}
+          onClose={() => {
+            setIsGiftModalOpen(false)
+            setAiGiftData(null)
+          }}
           onSubmit={handleCreateGift}
           title="Přidat nový dárek"
+          aiData={aiGiftData || undefined}
         />
 
         <GiftModal

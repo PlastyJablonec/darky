@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { giftService } from '@/services/giftService'
 import { supabase } from '@/config/supabase'
-import type { Database } from '@/types'
+import type { GiftWithReserver } from '@/types'
 
-type Gift = Database['public']['Tables']['gifts']['Row']
+type Gift = GiftWithReserver
 
 export function useGifts(wishlistId: string | null) {
   const { user } = useAuth()
@@ -59,7 +59,7 @@ export function useGifts(wishlistId: string | null) {
           if (payload.eventType === 'INSERT') {
             setGifts(prev => [payload.new as Gift, ...prev])
           } else if (payload.eventType === 'UPDATE') {
-            setGifts(prev => prev.map(g => 
+            setGifts(prev => prev.map(g =>
               g.id === payload.new.id ? payload.new as Gift : g
             ))
           } else if (payload.eventType === 'DELETE') {
@@ -124,7 +124,7 @@ export function useGifts(wishlistId: string | null) {
     })
 
     // Okamžitě aktualizovat lokální stav
-    setGifts(prev => prev.map(g => 
+    setGifts(prev => prev.map(g =>
       g.id === id ? updatedGift : g
     ))
 
@@ -133,7 +133,7 @@ export function useGifts(wishlistId: string | null) {
 
   const deleteGift = async (id: string) => {
     await giftService.deleteGift(id)
-    
+
     // Okamžitě odstranit z lokálního stavu
     setGifts(prev => prev.filter(g => g.id !== id))
   }
@@ -141,23 +141,32 @@ export function useGifts(wishlistId: string | null) {
   const reserveGift = async (id: string) => {
     if (!user) throw new Error('Musíte být přihlášeni')
     const updatedGift = await giftService.reserveGift(id, user.id)
-    
+
+    // Vytvoříme objekt s profilem rezervujícího změn
+    const giftWithProfile: Gift = {
+      ...updatedGift,
+      reserved_by_profile: {
+        display_name: user.user_metadata?.display_name || null,
+        email: user.email || null
+      }
+    }
+
     // Okamžitě aktualizovat lokální stav
-    setGifts(prev => prev.map(g => 
-      g.id === id ? updatedGift : g
+    setGifts(prev => prev.map(g =>
+      g.id === id ? giftWithProfile : g
     ))
-    
-    return updatedGift
+
+    return giftWithProfile
   }
 
   const unreserveGift = async (id: string) => {
     const updatedGift = await giftService.unreserveGift(id)
-    
+
     // Okamžitě aktualizovat lokální stav
-    setGifts(prev => prev.map(g => 
-      g.id === id ? updatedGift : g
+    setGifts(prev => prev.map(g =>
+      g.id === id ? { ...updatedGift, reserved_by_profile: undefined } : g
     ))
-    
+
     return updatedGift
   }
 

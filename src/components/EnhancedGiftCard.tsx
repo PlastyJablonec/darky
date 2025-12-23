@@ -9,9 +9,9 @@ import { OptimizedImage } from './OptimizedImage'
 import { GroupGiftProgress } from './GroupGiftProgress'
 import { ContributeModal } from './ContributeModal'
 import { ContributorChat } from './ContributorChat'
-import type { Database, GroupGiftSummary, Contribution } from '@/types'
+import type { GroupGiftSummary, Contribution, GiftWithReserver } from '@/types'
 
-type Gift = Database['public']['Tables']['gifts']['Row']
+type Gift = GiftWithReserver
 
 interface EnhancedGiftCardProps {
   gift: Gift
@@ -306,8 +306,8 @@ export function EnhancedGiftCard({
                 rel="noopener noreferrer"
                 onClick={handleProductUrlClick}
                 className={`inline-flex items-center text-sm transition-colors relative group ${user
-                    ? 'text-primary-600 hover:text-primary-700'
-                    : 'text-gray-400 cursor-pointer hover:text-primary-600'
+                  ? 'text-primary-600 hover:text-primary-700'
+                  : 'text-gray-400 cursor-pointer hover:text-primary-600'
                   }`}
               >
                 {user ? (
@@ -515,6 +515,11 @@ export function EnhancedGiftCard({
         <div className="card-footer">
           <div className="text-xs text-gray-500">
             {gift.is_group_gift ? 'Plně financováno' : 'Rezervováno'} {gift.reserved_at && new Date(gift.reserved_at).toLocaleDateString('cs-CZ')}
+            {isOwner && gift.reserved_by_profile && (
+              <span className="block font-medium text-blue-600 mt-1">
+                Rezervoval: {gift.reserved_by_profile.display_name || gift.reserved_by_profile.email}
+              </span>
+            )}
           </div>
         </div>
       )}

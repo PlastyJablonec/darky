@@ -8,6 +8,15 @@ export interface User {
   updatedAt: Date;
 }
 
+export type Gift = Database['public']['Tables']['gifts']['Row']
+
+export interface GiftWithReserver extends Gift {
+  reserved_by_profile?: {
+    display_name: string | null;
+    email: string | null;
+  }
+}
+
 export interface Wishlist {
   id: string;
   user_id: string;
@@ -87,6 +96,7 @@ export interface Database {
           updated_at?: string;
         };
       };
+
       gifts: {
         Row: {
           id: string;

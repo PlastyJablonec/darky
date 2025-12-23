@@ -6,15 +6,55 @@ type GiftInsert = Database['public']['Tables']['gifts']['Insert']
 type GiftUpdate = Database['public']['Tables']['gifts']['Update']
 
 export const giftService = {
-  async getWishlistGifts(wishlistId: string): Promise<Gift[]> {
-    const { data, error } = await supabase
+  async getWishlistGifts(wishlistId: string): Promise<any[]> {
+    // 1. Fetch gifts
+    const { data: gifts, error: giftsError } = await supabase
       .from('gifts')
       .select('*')
       .eq('wishlist_id', wishlistId)
       .order('created_at', { ascending: false })
 
-    if (error) throw error
-    return data || []
+    if (giftsError) throw giftsError
+    if (!gifts || gifts.length === 0) return []
+
+    // 2. Extract unique user IDs from reserved_by
+    const reserverIds = [...new Set(gifts
+      .filter(g => g.reserved_by)
+      .map(g => g.reserved_by)
+    )]
+
+    // 3. If no reservations, return gifts as is
+    if (reserverIds.length === 0) return gifts
+
+    // 4. Fetch profiles for these users
+    const { data: profiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, display_name, email')
+      .in('id', reserverIds)
+
+    if (profilesError) {
+      console.error('Error fetching reserver profiles:', profilesError)
+      return gifts // Return gifts without profile info on error
+    }
+
+    // 5. Merge profile data into gifts
+    const giftsWithProfiles = gifts.map(gift => {
+      if (!gift.reserved_by) return gift
+
+      const profile = profiles?.find(p => p.id === gift.reserved_by)
+      if (profile) {
+        return {
+          ...gift,
+          reserved_by_profile: {
+            display_name: profile.display_name,
+            email: profile.email
+          }
+        }
+      }
+      return gift
+    })
+
+    return giftsWithProfiles
   },
 
   async getGift(id: string): Promise<Gift | null> {
@@ -99,12 +139,12 @@ export const giftService = {
 
   formatPrice(price: number | null, currency: string = 'CZK'): string {
     if (!price) return 'Bez ceny'
-    
+
     const formatter = new Intl.NumberFormat('cs-CZ', {
       style: 'currency',
       currency: currency,
     })
-    
+
     return formatter.format(price)
   },
 
