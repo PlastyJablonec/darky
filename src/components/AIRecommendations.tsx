@@ -7,7 +7,7 @@ interface AIRecommendationsProps {
     wishes: Gift[]
     receivedGifts: Gift[]
     occasion?: string | null
-    onAddGift: (giftData: { title: string; description: string; price?: number }) => void
+    onAddGift?: (giftData: { title: string; description: string; price?: number }) => void
 }
 
 export function AIRecommendations({ wishes, receivedGifts, occasion, onAddGift }: AIRecommendationsProps) {
@@ -99,17 +99,19 @@ export function AIRecommendations({ wishes, receivedGifts, occasion, onAddGift }
                                         <ChevronRight className="h-3 w-3" />
                                         Tip na dárek
                                     </span>
-                                    <button
-                                        onClick={() => onAddGift({
-                                            title: tip.title,
-                                            description: tip.description,
-                                            price: tip.estimatedPrice
-                                        })}
-                                        className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                                        title="Přidat do seznamu"
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                    </button>
+                                    {onAddGift && (
+                                        <button
+                                            onClick={() => onAddGift({
+                                                title: tip.title,
+                                                description: tip.description,
+                                                price: tip.estimatedPrice
+                                            })}
+                                            className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                                            title="Přidat do seznamu"
+                                        >
+                                            <Plus className="h-5 w-5" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}

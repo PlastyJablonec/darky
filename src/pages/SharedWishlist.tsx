@@ -4,6 +4,7 @@ import { ArrowLeft, Gift, Heart } from 'lucide-react'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { ShareButtons } from '@/components/ShareButtons'
 import { OptimizedImage } from '@/components/OptimizedImage'
+import { AIRecommendations } from '@/components/AIRecommendations'
 import { useAuth } from '@/context/AuthContext'
 import { wishlistService } from '@/services/wishlistService'
 import { giftService } from '@/services/giftService'
@@ -65,6 +66,16 @@ export function SharedWishlist() {
 
     fetchSharedWishlist()
   }, [shareId, user])
+
+  const activeWishes = gifts
+    .filter(g => !g.is_received)
+    .sort((a, b) => {
+      const priorityOrder = { high: 0, medium: 1, low: 2 }
+      return (priorityOrder[a.priority as keyof typeof priorityOrder] || 0) -
+        (priorityOrder[b.priority as keyof typeof priorityOrder] || 0)
+    })
+
+  const receivedGifts = gifts.filter(g => g.is_received)
 
   const handleReserveGift = async (gift: Gift) => {
     try {
@@ -231,6 +242,14 @@ export function SharedWishlist() {
             </div>
           )}
 
+          {gifts.length > 0 && (
+            <AIRecommendations
+              wishes={activeWishes}
+              receivedGifts={receivedGifts}
+              occasion={wishlist.occasion}
+            />
+          )}
+
           {gifts.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -245,7 +264,7 @@ export function SharedWishlist() {
             </div>
           ) : (
             <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {gifts.map((gift) => (
+              {activeWishes.map((gift) => (
                 <EnhancedGiftCard
                   key={gift.id}
                   gift={gift}
@@ -254,6 +273,25 @@ export function SharedWishlist() {
                   onUnreserve={handleUnreserveGift}
                 />
               ))}
+            </div>
+          )}
+
+          {receivedGifts.length > 0 && (
+            <div className="mt-12 pt-8 border-t border-gray-200">
+              <div className="flex items-center space-x-2 mb-6 opacity-60">
+                <Gift className="h-5 w-5 text-gray-400" />
+                <h2 className="text-xl font-bold text-gray-700">Archiv obdržených dárků</h2>
+              </div>
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 opacity-60">
+                {receivedGifts.map((gift) => (
+                  <EnhancedGiftCard
+                    key={gift.id}
+                    gift={gift}
+                    isOwner={false}
+                    showReserved={false}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
