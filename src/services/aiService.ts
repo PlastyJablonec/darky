@@ -16,7 +16,6 @@ export class AIService {
     private static getFallbackTips(wishes: Gift[]): AITip[] {
         // Jednoduchá logika pro alespoň trochu relevantní tipy, když AI nejede
         const titles = wishes.map(w => w.title.toLowerCase()).join(' ')
-        const isTech = titles.includes('elektronika') || titles.includes('pc') || titles.includes('mobil')
         const isHome = titles.includes('byt') || titles.includes('kuchyň') || titles.includes('povlečení') || titles.includes('maska')
         const isHobbies = titles.includes('nářadí') || titles.includes('sport') || titles.includes('kutil')
 
