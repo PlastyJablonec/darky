@@ -13,33 +13,59 @@ export interface AITip {
 export class AIService {
     private static genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
-    private static getFallbackTips(): AITip[] {
-        return [
+    private static getFallbackTips(wishes: Gift[]): AITip[] {
+        // Jednoduchá logika pro alespoň trochu relevantní tipy, když AI nejede
+        const titles = wishes.map(w => w.title.toLowerCase()).join(' ')
+        const isTech = titles.includes('elektronika') || titles.includes('pc') || titles.includes('mobil')
+        const isHome = titles.includes('byt') || titles.includes('kuchyň') || titles.includes('povlečení') || titles.includes('maska')
+        const isHobbies = titles.includes('nářadí') || titles.includes('sport') || titles.includes('kutil')
+
+        const tips: AITip[] = [
             {
                 title: "Zážitkový poukaz",
                 description: "Vstupenky do divadla, na koncert nebo degustační večeři.",
                 estimatedPrice: 1500,
-                reasoning: "Zážitky jsou často lepší než hmotné dary a vždy potěší."
-            },
-            {
-                title: "Kvalitní káva nebo čaj",
-                description: "Výběrová zrnková káva nebo set sypaných čajů.",
-                estimatedPrice: 400,
-                reasoning: "Drobný, ale luxusní dárek pro každodenní potěšení."
-            },
-            {
-                title: "Kniha od oblíbeného autora",
-                description: "Novinka v žánru, který má oslavenec rád.",
-                estimatedPrice: 350,
-                reasoning: "Klasika, která nikdy nevyjde z módy."
+                reasoning: "Zážitky jsou skvělým doplňkem ke každému seznamu přání."
             }
         ]
+
+        if (isHome) {
+            tips.push({
+                title: "Aromatická svíčka nebo difuzér",
+                description: "Kvalitní vůně pro zútulnění domova.",
+                estimatedPrice: 450,
+                reasoning: "Doplňuje tvůj zájem o věci do domácnosti a relaxaci."
+            })
+        } else if (isHobbies) {
+            tips.push({
+                title: "Organizér nebo úložný box",
+                description: "Praktický systém pro uložení věcí nebo nářadí.",
+                estimatedPrice: 600,
+                reasoning: "Pomůže ti udržet tvé hobby komponenty přehledně uspořádané."
+            })
+        } else {
+            tips.push({
+                title: "Výběrová káva nebo set čajů",
+                description: "Degustační balíček pro gurmány.",
+                estimatedPrice: 400,
+                reasoning: "Univerzální dárek pro chvíle pohody."
+            })
+        }
+
+        tips.push({
+            title: "Dárková karta (Alza / Luxor / IKEA)",
+            description: "Karta v libovolné hodnotě do tvého oblíbeného obchodu.",
+            estimatedPrice: 1000,
+            reasoning: "Nejjistější cesta, jak si pořídit přesně to, co ti v seznamu ještě chybí."
+        })
+
+        return tips
     }
 
     static async analyzeGiftsAndGetTips(wishes: Gift[], ownedGifts: Gift[], occasion?: string): Promise<AITip[]> {
         if (!API_KEY) {
             console.warn('Missing Gemini API Key. Using fallback tips.')
-            return this.getFallbackTips()
+            return this.getFallbackTips(wishes)
         }
 
         const wishList = wishes
@@ -83,10 +109,13 @@ export class AIService {
     `
 
         // Valid model names for Gemini API
+        // gemini-2.0-flash-exp works but often hits quota
+        // gemini-1.5-flash often 404s if beta version is mismatched, but we'll try latest
         const modelsToTry = [
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-flash-latest',
             'gemini-1.5-flash',
-            'gemini-1.5-flash-8b',
-            'gemini-1.5-pro'
+            'gemini-1.5-pro-latest'
         ]
 
         let lastError: any = null
@@ -110,15 +139,15 @@ export class AIService {
                 lastError = error
                 console.warn(`Model ${modelName} failed:`, error.message)
 
-                // If it's a quota error, don't try other models, just break and go to fallback
-                if (error.message?.includes('429')) {
+                // If it's a quota error or auth error, don't try other models for this call
+                if (error.message?.includes('429') || error.message?.includes('403') || error.message?.includes('401')) {
                     break
                 }
             }
         }
 
         console.error('AI Service exhausted all models. Using fallback.', lastError)
-        return this.getFallbackTips()
+        return this.getFallbackTips(wishes)
     }
 }
 
