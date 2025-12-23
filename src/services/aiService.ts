@@ -17,14 +17,14 @@ export class AIService {
         if (wishes.length === 0) {
             return [
                 {
-                    title: "Zážitkový poukaz",
-                    description: "Vstupenky do divadla, na koncert nebo degustační večeři.",
+                    title: "Zážitkový poukaz na míru",
+                    description: "Vstupenky na akci podle tvých zájmů (kino, koncert, degustace).",
                     estimatedPrice: 1500,
-                    reasoning: "Univerzální dárek, který v začátcích seznamu vždy potěší."
+                    reasoning: "Univerzální, ale přizpůsobitelný dárek, který v začátcích seznamu vždy potěší."
                 },
                 {
-                    title: "Dárková karta",
-                    description: "Karta do oblíbeného obchodu (Alza, IKEA, Luxor).",
+                    title: "Dárková karta do oblíbeného obchodu",
+                    description: "Karta do obchodu, kde si vybereš přesně to, co ti v seznamu chybí.",
                     estimatedPrice: 1000,
                     reasoning: "Nejjistější volba pro první inspiraci."
                 }
@@ -34,93 +34,57 @@ export class AIService {
         const titles = wishes.map(w => w.title.toLowerCase());
         const pool: AITip[] = [];
 
-        // 1. Dynamický tip založený na existujících přáních
-        wishes.slice(0, 2).forEach(wish => {
-            pool.push({
-                title: `Prémiová verze nebo doplněk k: ${wish.title}`,
-                description: `Něco, co posune tvůj zážitek z ${wish.title.toLowerCase()} na další úroveň.`,
-                estimatedPrice: wish.price ? Math.round(wish.price * 0.4) : 500,
-                reasoning: `Tento tip jsme vybrali přímo podle tvého přání v seznamu.`
-            });
+        // 1. Specifické doporučení podle nejvýraznějších položek
+        const firstGift = wishes[0];
+        pool.push({
+            title: `Doplněk k: ${firstGift.title}`,
+            description: `Něco, co skvěle doplňuje tvé přání "${firstGift.title}".`,
+            estimatedPrice: firstGift.price ? Math.round(firstGift.price * 0.35) : 450,
+            reasoning: `Tento tip jsme vybrali, protože v seznamu už máš "${firstGift.title}".`
         });
 
-        // 2. Tématické dárky podle klíčových slov
-        const hasMatch = {
-            beauty: titles.some(t => t.includes('maska') || t.includes('kosmetika') || t.includes('péče') || t.includes('vlasy')),
-            home: titles.some(t => t.includes('povlečení') || t.includes('kuchyň') || t.includes('byt') || t.includes('domov')),
-            tool: titles.some(t => t.includes('nářadí') || t.includes('kutil') || t.includes('oprava') || t.includes('dílna')),
-            tech: titles.some(t => t.includes('mobil') || t.includes('pc') || t.includes('elektro') || t.includes('sluchátka'))
-        };
-
-        if (hasMatch.beauty) {
+        // 2. Tématická logika podle klíčových slov
+        if (titles.some(t => t.includes('maska') || t.includes('vlasy') || t.includes('péče'))) {
             pool.push({
-                title: "Luxusní vonná svíčka",
-                description: "Svíčka s dřevěným knotem pro dokonalou relaxaci u koupele.",
-                estimatedPrice: 550,
-                reasoning: "Skvěle doplňuje tvůj zájem o wellness a péči."
-            });
-            pool.push({
-                title: "Kosmetická taštička s monogramem",
-                description: "Stylový a osobní doplněk na tvé oblíbené produkty.",
-                estimatedPrice: 400,
-                reasoning: "Praktická drobnost pro někoho, kdo má rád svou kosmetiku."
+                title: "Sada relaxačních olejů",
+                description: "Balíček pro domácí wellness a hloubkovou relaxaci.",
+                estimatedPrice: 650,
+                reasoning: "Skvěle doplňuje tvou péči o sebe a relaxační rituály."
             });
         }
 
-        if (hasMatch.home) {
+        if (titles.some(t => t.includes('nářadí') || t.includes('kutil') || t.includes('dílna'))) {
             pool.push({
-                title: "Designový doplňek na noční stolek",
-                description: "Stylová lampička nebo podtácek, který zútulní tvou ložnici.",
-                estimatedPrice: 750,
-                reasoning: "Hodí se k tvému zájmu o doplňky do domácnosti."
-            });
-            pool.push({
-                title: "Kvalitní difuzér s esenciálními oleji",
-                description: "Pro provonění domova a lepší spánek.",
-                estimatedPrice: 900,
-                reasoning: "Doplňuje tvůj zájem o věci jako povlečení a pohodlí domova."
-            });
-        }
-
-        if (hasMatch.tool) {
-            pool.push({
-                title: "Víceúčelový nůž (Multitool)",
-                description: "Kvalitní nástroj, který nahradí celou brašnu s nářadím.",
-                estimatedPrice: 1200,
-                reasoning: "Pro kutila jako ty je to povinná výbava."
-            });
-            pool.push({
-                title: "Magnetický držák na nářadí",
-                description: "Lišta do dílny, díky které budeš mít v nářadí konečně systém.",
+                title: "Magnetický náramek na součástky",
+                description: "Praktická vychytávka, která ti při práci ušetří čas.",
                 estimatedPrice: 350,
-                reasoning: "Praktické rozšíření tvé dílny."
+                reasoning: "Šikovný pomocník pro tvé kutilské projekty."
             });
         }
 
-        if (hasMatch.tech) {
+        if (titles.some(t => t.includes('povlečení') || t.includes('byt') || t.includes('domov'))) {
             pool.push({
-                title: "Powerbanka s rychlonabíjením",
-                description: "Kompaktní zdroj energie na cesty.",
-                estimatedPrice: 800,
-                reasoning: "Abys měl svou elektroniku vždy nabitou."
+                title: "Designový doplňek do bytu",
+                description: "Stylový kousek, který vylepší atmosféru tvého domova.",
+                estimatedPrice: 500,
+                reasoning: "Víme, že ti záleží na pohodlí a stylu tvého domova."
             });
         }
 
-        // 3. Záložní tipy pro doplnění do 3
-        if (pool.length < 3) {
-            pool.push({
-                title: "Degustační set výběrové kávy",
-                description: "Výběr nejlepších kávových zrn pro gurmány.",
-                estimatedPrice: 450,
-                reasoning: "Univerzální prémiový dárek pro chvíle pohody."
-            });
-            pool.push({
-                title: "Láhev archivního vína",
-                description: "Výběr z menšího vinařství od someliéra.",
-                estimatedPrice: 600,
-                reasoning: "Když si chceš večer opravdu vychutnat."
-            });
-        }
+        // 3. Univerzální, ale kvalitní "fallbacky"
+        pool.push({
+            title: "Předplatné na audio knihy nebo hudbu",
+            description: "Dárkový kupon pro nekonečnou zábavu.",
+            estimatedPrice: 500,
+            reasoning: "Zábava, která se hodí ke každému stylu života."
+        });
+
+        pool.push({
+            title: "Kurz nebo workshop podle tvého gusta",
+            description: "Poukaz na lekci něčeho, co tě baví (vaření, malování, sport).",
+            estimatedPrice: 1200,
+            reasoning: "Zážitek a nové dovednosti jsou často nejlepším dárkem."
+        });
 
         // Zamíchat a vzít 3 náhodné
         return pool.sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -140,18 +104,15 @@ export class AIService {
             .join('\n');
 
         const prompt = `
-      Jsi expert na dárky a pomáháš vybrat 3 dárky na základě seznamu přání.
+      Jsi expert na dárky. Na základě seznamu přání navrhni 3 originální dárky.
       
-      SEZNAM PŘÁNÍ (tyto věci chce):
+      OSLAVENEC CHCE:
       ${wishList || 'Seznam je prázdný.'}
-
-      VLASTNĚNÉ VĚCI (inspirace):
+      OSLAVENEC MÁ:
       ${ownedList || 'Žádné.'}
-
       ${occasion ? `Příležitost: ${occasion}` : ''}
 
-      Úkol:
-      Navrhni 3 nové dárky (nenavrhuj ty ze seznamu).
+      Důležité: Nenavrhuj věci ze seznamu ani generické dárky. 
       Odpověď vrať VÝHRADNĚ ve formátu JSON:
       {
         "tips": [
@@ -160,12 +121,11 @@ export class AIService {
       }
     `;
 
-        // Updated model list with more specific variants to avoid 404
+        // Updated model list to avoid 404s and 400s
         const modelsToTry = [
-            { name: 'gemini-1.5-flash-8b-latest', version: 'v1beta' },
-            { name: 'gemini-1.5-flash-latest', version: 'v1beta' },
-            { name: 'gemini-1.5-flash', version: 'v1' },
             { name: 'gemini-1.5-flash', version: 'v1beta' },
+            { name: 'gemini-1.5-flash-latest', version: 'v1beta' },
+            { name: 'gemini-1.5-pro', version: 'v1beta' },
             { name: 'gemini-2.0-flash-exp', version: 'v1beta' }
         ];
 
@@ -176,13 +136,10 @@ export class AIService {
                 const model = this.genAI!.getGenerativeModel(
                     {
                         model: modelCfg.name,
-                        // For older models, sometimes removing specific configs helps with 404/403
                         generationConfig: {
                             temperature: 0.7,
-                            topP: 0.8,
-                            topK: 40,
                             maxOutputTokens: 1024,
-                            responseMimeType: "application/json"
+                            // removed responseMimeType to avoid 400 error on some models
                         }
                     },
                     { apiVersion: modelCfg.version as any }
@@ -194,6 +151,7 @@ export class AIService {
 
                 if (!text) continue;
 
+                // Robust JSON parsing (handles markdown blocks)
                 const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
                 const data = JSON.parse(jsonStr);
                 return data.tips || data;
