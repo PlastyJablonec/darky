@@ -109,22 +109,25 @@ export class AIService {
     `
 
         // Valid model names for Gemini API
-        // gemini-2.0-flash-exp works but often hits quota
-        // gemini-1.5-flash often 404s if beta version is mismatched, but we'll try latest
+        // Prioritizing 1.5-flash as it's the most stable for free tier
         const modelsToTry = [
-            'gemini-2.0-flash-exp',
-            'gemini-1.5-flash-latest',
             'gemini-1.5-flash',
-            'gemini-1.5-pro-latest'
+            'gemini-1.5-flash-latest',
+            'gemini-2.0-flash-exp',
+            'gemini-1.5-pro'
         ]
 
         let lastError: any = null
 
         for (const modelName of modelsToTry) {
             try {
+                // Ensure we are using the model name correctly
                 const model = this.genAI!.getGenerativeModel({
                     model: modelName,
-                    generationConfig: { responseMimeType: "application/json" }
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.7
+                    }
                 })
 
                 const result = await model.generateContent(prompt)
@@ -139,8 +142,8 @@ export class AIService {
                 lastError = error
                 console.warn(`Model ${modelName} failed:`, error.message)
 
-                // If it's a quota error or auth error, don't try other models for this call
-                if (error.message?.includes('429') || error.message?.includes('403') || error.message?.includes('401')) {
+                // If it's a quota error (429), don't bother trying other models
+                if (error.message?.includes('429')) {
                     break
                 }
             }
