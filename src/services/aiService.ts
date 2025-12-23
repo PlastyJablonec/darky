@@ -123,10 +123,11 @@ export class AIService {
 
         // Updated model list to avoid 404s and 400s
         const modelsToTry = [
+            { name: 'gemini-1.5-flash', version: 'v1' },
             { name: 'gemini-1.5-flash', version: 'v1beta' },
-            { name: 'gemini-1.5-flash-latest', version: 'v1beta' },
-            { name: 'gemini-1.5-pro', version: 'v1beta' },
-            { name: 'gemini-2.0-flash-exp', version: 'v1beta' }
+            { name: 'gemini-1.5-pro', version: 'v1' },
+            { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
+            { name: 'gemini-pro', version: 'v1' }
         ];
 
         let lastError: any = null;
