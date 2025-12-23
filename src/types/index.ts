@@ -130,6 +130,7 @@ export interface Database {
           reserved_by?: string | null;
           reserved_at?: string | null;
           is_group_gift?: boolean;
+          is_received?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -147,6 +148,7 @@ export interface Database {
           reserved_by?: string | null;
           reserved_at?: string | null;
           is_group_gift?: boolean;
+          is_received?: boolean;
           created_at?: string;
           updated_at?: string;
         };
