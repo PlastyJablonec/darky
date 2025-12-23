@@ -14,16 +14,18 @@ export class AIService {
     private static genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
     private static getFallbackTips(wishes: Gift[]): AITip[] {
+        console.log("DárekList: Aktivován Smart Fallback v2.1 (AI-Service-v3)");
+
         if (wishes.length === 0) {
             return [
                 {
                     title: "Zážitkový poukaz na míru",
                     description: "Vstupenky na akci podle tvých zájmů (kino, koncert, degustace).",
                     estimatedPrice: 1500,
-                    reasoning: "Univerzální, ale přizpůsobitelný dárek, který v začátcích seznamu vždy potěší."
+                    reasoning: "Univerzální dárek, který v začátcích seznamu vždy potěší."
                 },
                 {
-                    title: "Dárková karta do oblíbeného obchodu",
+                    title: "Dárková karta do obchodu",
                     description: "Karta do obchodu, kde si vybereš přesně to, co ti v seznamu chybí.",
                     estimatedPrice: 1000,
                     reasoning: "Nejjistější volba pro první inspiraci."
@@ -34,59 +36,41 @@ export class AIService {
         const titles = wishes.map(w => w.title.toLowerCase());
         const pool: AITip[] = [];
 
-        // 1. Specifické doporučení podle nejvýraznějších položek
         const firstGift = wishes[0];
         pool.push({
             title: `Doplněk k: ${firstGift.title}`,
-            description: `Něco, co skvěle doplňuje tvé přání "${firstGift.title}".`,
-            estimatedPrice: firstGift.price ? Math.round(firstGift.price * 0.35) : 450,
-            reasoning: `Tento tip jsme vybrali, protože v seznamu už máš "${firstGift.title}".`
+            description: `Příslušenství, které vylepší tvé přání "${firstGift.title}".`,
+            estimatedPrice: firstGift.price ? Math.round(firstGift.price * 0.3) : 350,
+            reasoning: "Tento tip jsme vybrali přímo na základě tvého aktuálního seznamu."
         });
 
-        // 2. Tématická logika podle klíčových slov
         if (titles.some(t => t.includes('maska') || t.includes('vlasy') || t.includes('péče'))) {
             pool.push({
-                title: "Sada relaxačních olejů",
-                description: "Balíček pro domácí wellness a hloubkovou relaxaci.",
+                title: "Wellness set esenciálních olejů",
+                description: "Pro hloubkovou relaxaci a domácí péči.",
                 estimatedPrice: 650,
-                reasoning: "Skvěle doplňuje tvou péči o sebe a relaxační rituály."
+                reasoning: "Skvěle se hodí k tvému zájmu o péči o sebe."
             });
         }
 
         if (titles.some(t => t.includes('nářadí') || t.includes('kutil') || t.includes('dílna'))) {
             pool.push({
-                title: "Magnetický náramek na součástky",
-                description: "Praktická vychytávka, která ti při práci ušetří čas.",
+                title: "Magnetický náramek na šroubky",
+                description: "Nepostradatelný pomocník do dílny.",
                 estimatedPrice: 350,
-                reasoning: "Šikovný pomocník pro tvé kutilské projekty."
+                reasoning: "Víme, že rád kutíš, tohle ti ušetří spoustu času."
             });
         }
 
-        if (titles.some(t => t.includes('povlečení') || t.includes('byt') || t.includes('domov'))) {
+        if (pool.length < 3) {
             pool.push({
-                title: "Designový doplňek do bytu",
-                description: "Stylový kousek, který vylepší atmosféru tvého domova.",
+                title: "Předplatné oblíbené služby",
+                description: "Dárkový poukaz na Netflix, Spotify nebo Audible.",
                 estimatedPrice: 500,
-                reasoning: "Víme, že ti záleží na pohodlí a stylu tvého domova."
+                reasoning: "Prémiová zábava, která se hodí ke každému koníčku."
             });
         }
 
-        // 3. Univerzální, ale kvalitní "fallbacky"
-        pool.push({
-            title: "Předplatné na audio knihy nebo hudbu",
-            description: "Dárkový kupon pro nekonečnou zábavu.",
-            estimatedPrice: 500,
-            reasoning: "Zábava, která se hodí ke každému stylu života."
-        });
-
-        pool.push({
-            title: "Kurz nebo workshop podle tvého gusta",
-            description: "Poukaz na lekci něčeho, co tě baví (vaření, malování, sport).",
-            estimatedPrice: 1200,
-            reasoning: "Zážitek a nové dovednosti jsou často nejlepším dárkem."
-        });
-
-        // Zamíchat a vzít 3 náhodné
         return pool.sort(() => 0.5 - Math.random()).slice(0, 3);
     }
 
@@ -121,12 +105,10 @@ export class AIService {
       }
     `;
 
-        // Updated model list to avoid 404s and 400s
         const modelsToTry = [
-            { name: 'gemini-1.5-flash', version: 'v1' },
             { name: 'gemini-1.5-flash', version: 'v1beta' },
-            { name: 'gemini-1.5-pro', version: 'v1' },
-            { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
+            { name: 'gemini-1.5-flash', version: 'v1' },
+            { name: 'gemini-1.5-pro', version: 'v1beta' },
             { name: 'gemini-pro', version: 'v1' }
         ];
 
@@ -140,7 +122,6 @@ export class AIService {
                         generationConfig: {
                             temperature: 0.7,
                             maxOutputTokens: 1024,
-                            // removed responseMimeType to avoid 400 error on some models
                         }
                     },
                     { apiVersion: modelCfg.version as any }
@@ -152,7 +133,6 @@ export class AIService {
 
                 if (!text) continue;
 
-                // Robust JSON parsing (handles markdown blocks)
                 const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
                 const data = JSON.parse(jsonStr);
                 return data.tips || data;
