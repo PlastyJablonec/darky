@@ -14,66 +14,93 @@ export class AIService {
     private static genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
     private static getFallbackTips(wishes: Gift[]): AITip[] {
-        // Jednoduchá logika pro alespoň trochu relevantní tipy, když AI nejede
-        const titles = wishes.map(w => w.title.toLowerCase()).join(' ')
-        const isHome = titles.includes('byt') || titles.includes('kuchyň') || titles.includes('povlečení') || titles.includes('maska')
-        const isHobbies = titles.includes('nářadí') || titles.includes('sport') || titles.includes('kutil')
-
-        const tips: AITip[] = [
-            {
-                title: "Zážitkový poukaz",
-                description: "Vstupenky do divadla, na koncert nebo degustační večeři.",
-                estimatedPrice: 1500,
-                reasoning: "Zážitky jsou skvělým doplňkem ke každému seznamu přání."
-            }
-        ]
-
-        if (isHome) {
-            tips.push({
-                title: "Aromatická svíčka nebo difuzér",
-                description: "Kvalitní vůně pro zútulnění domova.",
-                estimatedPrice: 450,
-                reasoning: "Doplňuje tvůj zájem o věci do domácnosti a relaxaci."
-            })
-        } else if (isHobbies) {
-            tips.push({
-                title: "Organizér nebo úložný box",
-                description: "Praktický systém pro uložení věcí nebo nářadí.",
-                estimatedPrice: 600,
-                reasoning: "Pomůže ti udržet tvé hobby komponenty přehledně uspořádané."
-            })
-        } else {
-            tips.push({
-                title: "Výběrová káva nebo set čajů",
-                description: "Degustační balíček pro gurmány.",
-                estimatedPrice: 400,
-                reasoning: "Univerzální dárek pro chvíle pohody."
-            })
+        if (wishes.length === 0) {
+            return [
+                {
+                    title: "Zážitkový poukaz",
+                    description: "Vstupenky do divadla, na koncert nebo degustační večeři.",
+                    estimatedPrice: 1500,
+                    reasoning: "Univerzální dárek, který potěší každého, kdo má rád kulturu a zážitky."
+                },
+                {
+                    title: "Dárková karta",
+                    description: "Karta do oblíbeného obchodu (Alza, IKEA, Luxor).",
+                    estimatedPrice: 1000,
+                    reasoning: "Nejjistější volba, když seznam zatím zeje prázdnotou."
+                }
+            ];
         }
 
-        tips.push({
-            title: "Dárková karta (Alza / Luxor / IKEA)",
-            description: "Karta v libovolné hodnotě do tvého oblíbeného obchodu.",
-            estimatedPrice: 1000,
-            reasoning: "Nejjistější cesta, jak si pořídit přesně to, co ti v seznamu ještě chybí."
-        })
+        const tips: AITip[] = [];
+        const titles = wishes.map(w => w.title.toLowerCase());
 
-        return tips
+        // 1. Tip založený na prvním dárku v seznamu
+        const mainWish = wishes[0];
+        tips.push({
+            title: `Doplněk k: ${mainWish.title}`,
+            description: `Kvalitní příslušenství nebo související drobnost, která vylepší zážitek z ${mainWish.title.toLowerCase()}.`,
+            estimatedPrice: mainWish.price ? Math.round(mainWish.price * 0.3) : 500,
+            reasoning: `Tento tip jsme vybrali, protože v seznamu máš ${mainWish.title.toLowerCase()}.`
+        });
+
+        // 2. Tématický tip
+        const isBeauty = titles.some(t => t.includes('maska') || t.includes('kosmetika') || t.includes('péče'));
+        const isHome = titles.some(t => t.includes('povlečení') || t.includes('kuchyň') || t.includes('byt'));
+        const isTool = titles.some(t => t.includes('nářadí') || t.includes('kutil') || t.includes('oprava'));
+
+        if (isBeauty) {
+            tips.push({
+                title: "Sada relaxačních olejů",
+                description: "Balíček esenciálních olejů pro domácí wellness a relaxaci.",
+                estimatedPrice: 450,
+                reasoning: "Skvěle doplňuje tvůj zájem o péči o sebe a relaxační rituály."
+            });
+        } else if (isHome) {
+            tips.push({
+                title: "Designový doplňek do bytu",
+                description: "Stylová dekorace, svíčka nebo drobnost, která zútulní domov.",
+                estimatedPrice: 600,
+                reasoning: "Víme, že rád/a vylepšuješ své okolí a domov."
+            });
+        } else if (isTool) {
+            tips.push({
+                title: "Magnetický náramek na šroubky",
+                description: "Praktický pomocník pro každého kutila při práci v dílně.",
+                estimatedPrice: 350,
+                reasoning: "Praktická drobnost, která se hodí k tvému kutilskému vybavení."
+            });
+        } else {
+            tips.push({
+                title: "Degustační set káv nebo čajů",
+                description: "Výběr nejlepších kávových zrn nebo sypaných čajů v dárkovém balení.",
+                estimatedPrice: 400,
+                reasoning: "Univerzální prémiový dárek pro chvíle klidu a pohody."
+            });
+        }
+
+        // 3. Univerzální doplňující tip
+        tips.push({
+            title: "Předplatné oblíbené služby",
+            description: "Kupon na Netflix, Spotify nebo třeba předplatné časopisu.",
+            estimatedPrice: 300,
+            reasoning: "Zábava, která se hodí ke každému stylu života."
+        });
+
+        return tips.slice(0, 3);
     }
 
     static async analyzeGiftsAndGetTips(wishes: Gift[], ownedGifts: Gift[], occasion?: string): Promise<AITip[]> {
         if (!API_KEY) {
-            console.warn('Missing Gemini API Key. Using fallback tips.')
-            return this.getFallbackTips(wishes)
+            return this.getFallbackTips(wishes);
         }
 
         const wishList = wishes
             .map((g) => `- ${g.title}${g.description ? `: ${g.description}` : ''}${g.price ? ` (${g.price} ${g.currency})` : ''}`)
-            .join('\n')
+            .join('\n');
 
         const ownedList = ownedGifts
             .map((g) => `- ${g.title}${g.description ? `: ${g.description}` : ''}`)
-            .join('\n')
+            .join('\n');
 
         const prompt = `
       Jsi expert na dárky a pomáháš NÁVŠTĚVNÍKOVI vybrat skvělý dárek pro jeho kamaráda/blízkého na základě jeho seznamu přání.
@@ -87,14 +114,14 @@ export class AIService {
       ${occasion ? `Příležitost: ${occasion}` : ''}
 
       Úkol:
-      Navrhni 3 až 5 dalších originálních dárků, které by oslavence potěšily a hodily se k jeho stylu.
+      Navrhni 3 originální dárky, které by oslavence potěšily a hodily se k jeho stylu.
       
       Důležité podmínky:
       1. Nenavrhuj věci, které už jsou v seznamu přání nebo v seznamu obdržených dárků.
-      2. Navrhuj dárky v RŮZNÝCH cenových hladinách (od levných drobností po dražší věci).
-      3. Odpověz v češtině, tón by měl být inspirativní a nápomocný pro někoho, kdo vybírá dárek.
+      2. Navrhuj dárky v RŮZNÝCH cenových hladinách.
+      3. Odpověz v češtině.
 
-      Odpověď vrať VÝHRADNĚ ve formátu JSON podle tohoto schématu:
+      Odpověď vrať VÝHRADNĚ ve formátu JSON:
       {
         "tips": [
           {
@@ -105,52 +132,47 @@ export class AIService {
           }
         ]
       }
-    `
+    `;
 
-        // Valid model names for Gemini API
-        // Prioritizing 1.5-flash as it's the most stable for free tier
+        // Trying stable v1 models first to avoid 404s
         const modelsToTry = [
-            'gemini-1.5-flash',
-            'gemini-1.5-flash-latest',
-            'gemini-2.0-flash-exp',
-            'gemini-1.5-pro'
-        ]
+            { name: 'gemini-1.5-flash', version: 'v1' },
+            { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
+            { name: 'gemini-1.5-pro', version: 'v1' }
+        ];
 
-        let lastError: any = null
+        let lastError: any = null;
 
-        for (const modelName of modelsToTry) {
+        for (const modelCfg of modelsToTry) {
             try {
-                // Ensure we are using the model name correctly
-                const model = this.genAI!.getGenerativeModel({
-                    model: modelName,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        temperature: 0.7
-                    }
-                })
+                const model = this.genAI!.getGenerativeModel(
+                    { model: modelCfg.name },
+                    { apiVersion: modelCfg.version as any }
+                );
 
-                const result = await model.generateContent(prompt)
-                const response = await result.response
-                const text = response.text()
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
 
-                if (!text) continue
+                if (!text) continue;
 
-                const data = JSON.parse(text)
-                return data.tips || data
+                // Clean potential markdown code blocks
+                const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const data = JSON.parse(jsonStr);
+                return data.tips || data;
             } catch (error: any) {
-                lastError = error
-                console.warn(`Model ${modelName} failed:`, error.message)
+                lastError = error;
+                console.warn(`Model ${modelCfg.name} (${modelCfg.version}) failed:`, error.message);
 
-                // If it's a quota error (429), don't bother trying other models
                 if (error.message?.includes('429')) {
-                    break
+                    break;
                 }
             }
         }
 
-        console.error('AI Service exhausted all models. Using fallback.', lastError)
-        return this.getFallbackTips(wishes)
+        console.error('AI Service exhausted all models. Using smart fallback.', lastError);
+        return this.getFallbackTips(wishes);
     }
 }
 
-export const aiService = AIService
+export const aiService = AIService;
