@@ -36,16 +36,27 @@ export class AIService {
       Na základě těchto dat navrhni 3 až 5 dalších dárků, které by se k těmto hodily nebo by mohly uživatele zajímat.
     `
 
-        // List of models to try in order of preference
-        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-2.0-flash-exp', 'gemini-1.5-pro']
+        // List of models to try. Including the one from your other project!
+        const modelsToTry = [
+            'gemini-2.5-flash',       // Exact string from your other project
+            'gemini-1.5-flash',
+            'gemini-1.5-flash-latest',
+            'gemini-2.0-flash-exp'
+        ]
 
         // Diagnostic: Try to list models
         try {
             console.log('Provádím diagnostiku: Výpis dostupných modelů...')
-            const modelList = await (this.ai as any).models.list()
-            console.log('Dostupné modely pro tento klíč:', (modelList as any).map((m: any) => m.name))
+            const modelList: any = await (this.ai as any).models.list()
+            console.log('Surová odpověď diagnostiky:', modelList)
+
+            // Try to extract model names robustly
+            const models = Array.isArray(modelList) ? modelList : (modelList.models || [])
+            if (Array.isArray(models)) {
+                console.log('Dostupné modely pro tento klíč:', models.map((m: any) => m.name))
+            }
         } catch (diagError: any) {
-            console.warn('Nepodařilo se vypsat seznam modelů (možná omezený klíč):', diagError.message)
+            console.warn('Nepodařilo se vypsat seznam modelů:', diagError.message)
         }
 
         let lastError = null
@@ -84,15 +95,15 @@ export class AIService {
                 if (!text) throw new Error('AI nevrátila žádnou odpověď.')
 
                 const data = JSON.parse(text)
-                console.log(`Model ${modelName} úspěšně odpověděl!`)
+                console.log(`✅ Model ${modelName} úspěšně odpověděl!`)
                 return data.tips || data
             } catch (error: any) {
-                console.warn(`Model ${modelName} selhal:`, error.message)
+                console.warn(`❌ Model ${modelName} selhal:`, error.message)
                 lastError = error
 
-                // If quota exceeded or auth error, don't keep trying others that likely share the same quota
-                if (error.message?.includes('429') || error.message?.includes('401') || error.message?.includes('403')) {
-                    break
+                // If it's a quota error (429) or limit: 0, we should probably stop if it's consistent
+                if (error.message?.includes('429') || error.message?.includes('403') || error.message?.includes('401')) {
+                    // But we'll try other models anyway just in case only some are disabled
                 }
             }
         }
@@ -100,10 +111,10 @@ export class AIService {
         console.error('Všechny AI modely selhaly.', lastError)
 
         if (lastError?.message?.includes('limit: 0') || lastError?.message?.includes('429')) {
-            throw new Error('Vaše AI Project nemá nastavenou kvótu pro tyto modely. Zkontrolujte prosím Google AI Studio (Free Tier vs Pay-as-you-go).')
+            throw new Error('Chyba kvóty (429): Váš projekt v Google AI Studiu nemá povolen tento model nebo jste překročili limit (v Free tieru je limit na gemini-2.0-flash-exp často 0).')
         }
 
-        throw new Error(`Nepodařilo se najít funkční AI model. Poslední chyba: ${lastError?.message || 'Neznámá chyba'}`)
+        throw new Error(`Nepodařilo se najít funkční AI model. Poslední chyba (${modelsToTry[modelsToTry.length - 1]}): ${lastError?.message || 'Neznámá chyba'}`)
     }
 }
 
