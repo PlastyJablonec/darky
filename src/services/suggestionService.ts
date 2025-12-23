@@ -20,7 +20,7 @@ export class SuggestionService {
     // Check if gift exists and is not already a group gift
     const { data: gift, error: giftError } = await supabase
       .from('gifts')
-      .select('id, title, price, is_group_gift, wishlist_id, wishlists!inner(user_id, title, is_public)')
+      .select('id, title, price, is_group_gift, wishlist_id, wishlists(user_id, title, is_public)')
       .eq('id', giftId)
       .single()
 
@@ -84,9 +84,9 @@ export class SuggestionService {
       .select('id')
       .eq('gift_id', giftId)
       .eq('suggested_by', user.user.id)
-      .single()
+      .limit(1)
 
-    return !error && !!data
+    return !error && data && data.length > 0
   }
 
   // Get all suggestions for a gift
@@ -107,10 +107,10 @@ export class SuggestionService {
 
     // Get suggester info
     const { data: { user: currentUser } } = await supabase.auth.getUser()
-    
+
     return suggestions.map(suggestion => {
       // For privacy, only show names of current user, others show as generic
-      const suggestedByName = suggestion.suggested_by === currentUser?.id 
+      const suggestedByName = suggestion.suggested_by === currentUser?.id
         ? (currentUser?.user_metadata?.display_name || currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Já')
         : 'Někdo z přátel'
 
@@ -159,7 +159,7 @@ export class SuggestionService {
     // Update the gift to be a group gift
     const { error } = await supabase
       .from('gifts')
-      .update({ 
+      .update({
         is_group_gift: true,
         updated_at: new Date().toISOString()
       })
