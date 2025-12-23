@@ -36,43 +36,61 @@ export class AIService {
       Na základě těchto dat navrhni 3 až 5 dalších dárků, které by se k těmto hodily nebo by mohly uživatele zajímat.
     `
 
-        try {
-            // Using gemini-1.5-flash as it's stable and widely available.
-            const response = await this.ai.models.generateContent({
-                model: 'gemini-1.5-flash',
-                contents: prompt,
-                config: {
-                    responseMimeType: 'application/json',
-                    responseSchema: {
-                        type: Type.ARRAY,
-                        items: {
+        // List of models to try in order of preference
+        const modelsToTry = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-2.0-flash-exp', 'gemini-1.5-pro']
+        let lastError = null
+
+        for (const modelName of modelsToTry) {
+            try {
+                console.log(`Zkouším AI model: ${modelName}...`)
+                const response = await this.ai.models.generateContent({
+                    model: modelName,
+                    contents: prompt,
+                    config: {
+                        responseMimeType: 'application/json',
+                        responseSchema: {
                             type: Type.OBJECT,
                             properties: {
-                                title: { type: Type.STRING },
-                                description: { type: Type.STRING },
-                                estimatedPrice: { type: Type.NUMBER },
-                                reasoning: { type: Type.STRING }
+                                tips: {
+                                    type: Type.ARRAY,
+                                    items: {
+                                        type: Type.OBJECT,
+                                        properties: {
+                                            title: { type: Type.STRING },
+                                            description: { type: Type.STRING },
+                                            estimatedPrice: { type: Type.NUMBER },
+                                            reasoning: { type: Type.STRING }
+                                        },
+                                        required: ['title', 'description', 'reasoning']
+                                    }
+                                }
                             },
-                            required: ['title', 'description', 'reasoning']
+                            required: ['tips']
                         }
                     }
+                })
+
+                const text = response.text
+                if (!text) throw new Error('AI nevrátila žádnou odpověď.')
+
+                const data = JSON.parse(text)
+                return data.tips || data // Support both wrapped and direct array if AI ignores schema slightly
+            } catch (error: any) {
+                console.warn(`Model ${modelName} selhal:`, error.message)
+                lastError = error
+                // If it's not a 404, it might be a payload/auth issue, so maybe don't retry other models?
+                // But for now, let's try all if 404.
+                if (!error.message?.includes('404')) {
+                    // If it's a quota or auth error, stop early
+                    if (error.message?.includes('429') || error.message?.includes('401') || error.message?.includes('403')) {
+                        break
+                    }
                 }
-            })
-
-            const text = response.text
-            if (!text) throw new Error('AI nevrátila žádnou odpověď.')
-
-            const tips: AITip[] = JSON.parse(text)
-            return tips
-        } catch (error: any) {
-            console.error('Gemini AI Error Details:', error)
-
-            if (error.message?.includes('404')) {
-                throw new Error('Model AI nebyl nalezen. Zkontrolujte prosím nastavení v Google AI Studiu.')
             }
-
-            throw new Error(`Nepodařilo se získat návrhy: ${error.message || 'Neznámá chyba'}`)
         }
+
+        console.error('Všechny AI modely selhaly.', lastError)
+        throw new Error(`Nepodařilo se najít funkční AI model. Poslední chyba: ${lastError?.message || 'Neznámá chyba'}`)
     }
 }
 
