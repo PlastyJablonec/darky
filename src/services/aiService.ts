@@ -1,4 +1,4 @@
-import { GoogleGenAI, SchemaType } from '@google/genai'
+import { GoogleGenAI, Type } from '@google/genai'
 import type { Gift } from '@/types'
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
@@ -37,23 +37,21 @@ export class AIService {
     `
 
         try {
-            // Using the newest flash model as in your other project (correcting 2.5 to 2.0 or 1.5)
-            // gemini-2.0-flash is the latest experimental/preview, gemini-1.5-flash is stable.
-            // Let's use gemini-1.5-flash as it's widely available.
+            // Using gemini-1.5-flash as it's stable and widely available.
             const response = await this.ai.models.generateContent({
                 model: 'gemini-1.5-flash',
                 contents: prompt,
                 config: {
                     responseMimeType: 'application/json',
                     responseSchema: {
-                        type: SchemaType.ARRAY,
+                        type: Type.ARRAY,
                         items: {
-                            type: SchemaType.OBJECT,
+                            type: Type.OBJECT,
                             properties: {
-                                title: { type: SchemaType.STRING },
-                                description: { type: SchemaType.STRING },
-                                estimatedPrice: { type: SchemaType.NUMBER },
-                                reasoning: { type: SchemaType.STRING }
+                                title: { type: Type.STRING },
+                                description: { type: Type.STRING },
+                                estimatedPrice: { type: Type.NUMBER },
+                                reasoning: { type: Type.STRING }
                             },
                             required: ['title', 'description', 'reasoning']
                         }
