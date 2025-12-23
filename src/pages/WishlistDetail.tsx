@@ -208,6 +208,14 @@ export function WishlistDetail() {
     }
   }
 
+  const handleToggleReceived = async (gift: Gift) => {
+    try {
+      await updateGift(gift.id, { is_received: !gift.is_received })
+    } catch (error) {
+      console.error('Error toggling received status:', error)
+    }
+  }
+
   const handleAddAIRecommendedGift = (giftData: { title: string; description: string; price?: number }) => {
     setEditingGift(null)
     setAiGiftData(giftData)
@@ -228,7 +236,8 @@ export function WishlistDetail() {
   }
 
   // Filter and Sort Logic
-  const filteredAndSortedGifts = gifts
+  const activeWishes = gifts
+    .filter(g => !g.is_received)
     .filter(gift => {
       if (filterBy === 'all') return true
       if (filterBy === 'available') return !gift.is_reserved
@@ -237,21 +246,20 @@ export function WishlistDetail() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'date_desc': // Newest first
+        case 'date_desc':
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        case 'date_asc': // Oldest first
+        case 'date_asc':
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case 'price_asc': // Cheapest first
-          // Treat null price as 0 or Infinity? Usually 0 or put at end.
-          // Let's treat null as 0 for "price unknown/low" or maybe max?
-          // Defaulting to 0 for simplicity
+        case 'price_asc':
           return (a.price || 0) - (b.price || 0)
-        case 'price_desc': // Most expensive first
+        case 'price_desc':
           return (b.price || 0) - (a.price || 0)
         default:
           return 0
       }
     })
+
+  const receivedGifts = gifts.filter(g => g.is_received)
 
   if (loading) {
     return (
@@ -383,9 +391,10 @@ export function WishlistDetail() {
         )}
 
         {/* AI recommendations section */}
-        {isOwner && gifts.length > 0 && (
+        {gifts.length > 0 && (
           <AIRecommendations
-            gifts={gifts}
+            wishes={activeWishes}
+            receivedGifts={receivedGifts}
             occasion={wishlist.occasion}
             onAddGift={handleAddAIRecommendedGift}
           />
@@ -484,7 +493,7 @@ export function WishlistDetail() {
             </div>
 
             <div className="text-sm text-gray-500 hidden sm:block font-sans">
-              {filteredAndSortedGifts.length} {filteredAndSortedGifts.length === 1 ? 'dárek' : filteredAndSortedGifts.length >= 2 && filteredAndSortedGifts.length <= 4 ? 'dárky' : 'dárků'}
+              {activeWishes.length} {activeWishes.length === 1 ? 'dárek' : activeWishes.length >= 2 && activeWishes.length <= 4 ? 'dárky' : 'dárků'}
             </div>
           </div>
         )}
@@ -497,7 +506,7 @@ export function WishlistDetail() {
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{giftsError}</p>
           </div>
-        ) : gifts.length === 0 ? (
+        ) : activeWishes.length === 0 && receivedGifts.length === 0 ? (
           <div className="text-center py-12">
             <div className="max-w-md mx-auto">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -522,19 +531,50 @@ export function WishlistDetail() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {filteredAndSortedGifts.map((gift) => (
-              <EnhancedGiftCard
-                key={gift.id}
-                gift={gift}
-                isOwner={isOwner}
-                onEdit={(gift) => setEditingGift(gift)}
-                onDelete={(gift) => setDeletingGift(gift)}
-                onReserve={handleReserveGift}
-                onUnreserve={handleUnreserveGift}
-                showReserved={wishlist.type === 'managed'}
-              />
-            ))}
+          <div className="space-y-12">
+            {/* Active Wishes Section */}
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {activeWishes.map((gift) => (
+                  <EnhancedGiftCard
+                    key={gift.id}
+                    gift={gift}
+                    isOwner={isOwner}
+                    onEdit={(gift) => setEditingGift(gift)}
+                    onDelete={(gift) => setDeletingGift(gift)}
+                    onReserve={handleReserveGift}
+                    onUnreserve={handleUnreserveGift}
+                    onToggleReceived={handleToggleReceived}
+                    showReserved={wishlist.type === 'managed'}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Archive Section (Received Gifts) */}
+            {receivedGifts.length > 0 && (
+              <div className="space-y-6 pt-6 border-t border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <h2 className="text-xl font-bold text-gray-900">Archiv obdržených dárků</h2>
+                </div>
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 opacity-60 hover:opacity-100 transition-opacity">
+                  {receivedGifts.map((gift) => (
+                    <EnhancedGiftCard
+                      key={gift.id}
+                      gift={gift}
+                      isOwner={isOwner}
+                      onEdit={(gift) => setEditingGift(gift)}
+                      onDelete={(gift) => setDeletingGift(gift)}
+                      onReserve={handleReserveGift}
+                      onUnreserve={handleUnreserveGift}
+                      onToggleReceived={handleToggleReceived}
+                      showReserved={false}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

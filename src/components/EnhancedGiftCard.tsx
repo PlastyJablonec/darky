@@ -20,6 +20,7 @@ interface EnhancedGiftCardProps {
   onDelete?: (gift: Gift) => void
   onReserve?: (gift: Gift) => void
   onUnreserve?: (gift: Gift) => void
+  onToggleReceived?: (gift: Gift) => void
   showReserved?: boolean
 }
 
@@ -30,6 +31,7 @@ export function EnhancedGiftCard({
   onDelete,
   onReserve,
   onUnreserve,
+  onToggleReceived,
   showReserved = false
 }: EnhancedGiftCardProps) {
   const { user } = useAuth()
@@ -349,6 +351,24 @@ export function EnhancedGiftCard({
             </div>
           )}
         </div>
+
+        {/* Owner Archive Action */}
+        {isOwner && onToggleReceived && (
+          <div className="space-y-2 mt-auto">
+            <button
+              onClick={() => onToggleReceived(gift)}
+              className={`w-full flex items-center justify-center space-x-2 py-2 rounded-lg border transition-all ${gift.is_received
+                ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-green-300 hover:text-green-700'
+                }`}
+            >
+              <CheckCircle className={`h-5 w-5 ${gift.is_received ? 'text-green-600' : 'text-gray-400'}`} />
+              <span className="font-medium">
+                {gift.is_received ? 'Obdrženo (Vrátit do přání)' : 'Označit jako obdržené'}
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Action Buttons for Non-owners */}
         {!isOwner && (

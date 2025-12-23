@@ -4,12 +4,13 @@ import { aiService, AITip } from '@/services/aiService'
 import type { Gift } from '@/types'
 
 interface AIRecommendationsProps {
-    gifts: Gift[]
+    wishes: Gift[]
+    receivedGifts: Gift[]
     occasion?: string | null
     onAddGift: (giftData: { title: string; description: string; price?: number }) => void
 }
 
-export function AIRecommendations({ gifts, occasion, onAddGift }: AIRecommendationsProps) {
+export function AIRecommendations({ wishes, receivedGifts, occasion, onAddGift }: AIRecommendationsProps) {
     const [loading, setLoading] = useState(false)
     const [tips, setTips] = useState<AITip[]>([])
     const [error, setError] = useState<string | null>(null)
@@ -19,7 +20,7 @@ export function AIRecommendations({ gifts, occasion, onAddGift }: AIRecommendati
         try {
             setLoading(true)
             setError(null)
-            const results = await aiService.analyzeGiftsAndGetTips(gifts, occasion || undefined)
+            const results = await aiService.analyzeGiftsAndGetTips(wishes, receivedGifts, occasion || undefined)
             setTips(results)
             setIsExpanded(true)
         } catch (err) {
@@ -41,8 +42,8 @@ export function AIRecommendations({ gifts, occasion, onAddGift }: AIRecommendati
                             <Brain className="h-6 w-6 text-indigo-600" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 leading-none">Chytré tipy na dárky</h3>
-                            <p className="text-sm text-gray-600 mt-1">AI analyzuje váš seznam a navrhne další dárky</p>
+                            <h3 className="text-lg font-bold text-gray-900 leading-none">Chybí vám inspirace?</h3>
+                            <p className="text-sm text-gray-600 mt-1">AI analyzuje seznam a navrhne skvělý dárek</p>
                         </div>
                     </div>
 
@@ -96,7 +97,7 @@ export function AIRecommendations({ gifts, occasion, onAddGift }: AIRecommendati
                                 <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-50">
                                     <span className="text-xs text-gray-400 flex items-center">
                                         <ChevronRight className="h-3 w-3" />
-                                        AI Návrh
+                                        Tip na dárek
                                     </span>
                                     <button
                                         onClick={() => onAddGift({

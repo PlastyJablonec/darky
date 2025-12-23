@@ -112,18 +112,19 @@ export function useGifts(wishlistId: string | null) {
     imageUrl?: string
     priority?: 'low' | 'medium' | 'high'
     isGroupGift?: boolean
+    is_received?: boolean
   }) => {
     const updatedGift = await giftService.updateGift(id, {
       title: updates.title,
-      description: updates.description || null,
-      price: updates.price || null,
-      product_url: updates.productUrl || null,
-      image_url: updates.imageUrl || null,
+      description: updates.description,
+      price: updates.price,
+      product_url: updates.productUrl,
+      image_url: updates.imageUrl,
       priority: updates.priority,
       is_group_gift: updates.isGroupGift,
+      is_received: updates.is_received,
     })
 
-    // Okamžitě aktualizovat lokální stav
     setGifts(prev => prev.map(g =>
       g.id === id ? updatedGift : g
     ))
@@ -133,8 +134,6 @@ export function useGifts(wishlistId: string | null) {
 
   const deleteGift = async (id: string) => {
     await giftService.deleteGift(id)
-
-    // Okamžitě odstranit z lokálního stavu
     setGifts(prev => prev.filter(g => g.id !== id))
   }
 
@@ -142,7 +141,6 @@ export function useGifts(wishlistId: string | null) {
     if (!user) throw new Error('Musíte být přihlášeni')
     const updatedGift = await giftService.reserveGift(id, user.id)
 
-    // Vytvoříme objekt s profilem rezervujícího změn
     const giftWithProfile: Gift = {
       ...updatedGift,
       reserved_by_profile: {
@@ -151,7 +149,6 @@ export function useGifts(wishlistId: string | null) {
       }
     }
 
-    // Okamžitě aktualizovat lokální stav
     setGifts(prev => prev.map(g =>
       g.id === id ? giftWithProfile : g
     ))
@@ -161,12 +158,9 @@ export function useGifts(wishlistId: string | null) {
 
   const unreserveGift = async (id: string) => {
     const updatedGift = await giftService.unreserveGift(id)
-
-    // Okamžitě aktualizovat lokální stav
     setGifts(prev => prev.map(g =>
       g.id === id ? { ...updatedGift, reserved_by_profile: undefined } : g
     ))
-
     return updatedGift
   }
 
