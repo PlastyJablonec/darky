@@ -50,14 +50,27 @@ export class AIService {
             const response = await result.response
             const text = response.text()
 
-            // Remove markdown code blocks if present
-            const jsonStr = text.replace(/```json|```/g, '').trim()
-            const tips: AITip[] = JSON.parse(jsonStr)
+            try {
+                // Remove markdown code blocks if present
+                const jsonStr = text.replace(/```json|```/g, '').trim()
+                const tips: AITip[] = JSON.parse(jsonStr)
+                return tips
+            } catch (parseError) {
+                console.error('JSON Parse Error:', parseError, 'Raw text:', text)
+                throw new Error('AI vrátila nečitelný formát. Zkuste to prosím znovu.')
+            }
+        } catch (error: any) {
+            console.error('Gemini AI Error Details:', error)
 
-            return tips
-        } catch (error) {
-            console.error('Gemini AI Error:', error)
-            throw new Error('Nepodařilo se získat návrhy od AI. Zkontrolujte API klíč a připojení.')
+            // Better error messages for common issues
+            if (error.message?.includes('API_KEY_INVALID')) {
+                throw new Error('Váš API klíč pro Gemini není platný. Zkontrolujte ho v nastavení.')
+            }
+            if (error.message?.includes('quota')) {
+                throw new Error('Dosáhli jste limitu požadavků pro AI. Zkuste to prosím později.')
+            }
+
+            throw new Error(`Chyba AI: ${error.message || 'Nepodařilo se získat návrhy.'}`)
         }
     }
 }
