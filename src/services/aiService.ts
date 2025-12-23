@@ -14,7 +14,7 @@ export class AIService {
     private static genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
     private static getFallbackTips(wishes: Gift[]): AITip[] {
-        console.log("DárekList: Aktivován Smart Fallback v3.0 (Tech Edition)");
+        console.log("DárekList: Aktivován Smart Fallback v3.1");
 
         if (wishes.length === 0) {
             return [
@@ -25,8 +25,8 @@ export class AIService {
                     reasoning: "Univerzální dárek pro začátek."
                 },
                 {
-                    title: "Dárková karta do Alzy",
-                    description: "Karta do technického obchodu na cokoliv.",
+                    title: "Dárková karta",
+                    description: "Do oblíbeného obchodu na cokoliv.",
                     estimatedPrice: 1000,
                     reasoning: "Nejjistější volba."
                 }
@@ -36,115 +36,137 @@ export class AIService {
         const allText = wishes.map(w => `${w.title} ${w.description || ''}`).join(' ').toLowerCase();
         const pool: AITip[] = [];
 
-        // 1. Elektronika / Tech
-        const isTech = allText.includes('logitech') || allText.includes('mouse') || allText.includes('myš') ||
-            allText.includes('drone') || allText.includes('dji') || allText.includes('dron') ||
-            allText.includes('watch') || allText.includes('hodinky') || allText.includes('prsten') ||
-            allText.includes('projektor') || allText.includes('sluchátka') || allText.includes('mobil') ||
-            allText.includes('samsung') || allText.includes('fractal') || allText.includes('pc') ||
-            allText.includes('case') || allText.includes('skříň');
-
-        if (isTech) {
+        // 1. Wellness / Péče o sebe (maska, vlasy, kosmetika)
+        if (allText.includes('maska') || allText.includes('vlasy') || allText.includes('péče') || allText.includes('kosmetik')) {
             pool.push({
-                title: "Kvalitní USB-C hub / dokovací stanice",
-                description: "Pro připojení všech tvých zařízení na jednom místě.",
-                estimatedPrice: 1200,
-                reasoning: "Hodí se k tvé sbírce elektroniky a gadgetů."
+                title: "Sada relaxačních esenciálních olejů",
+                description: "Pro domácí wellness a hloubkovou relaxaci.",
+                estimatedPrice: 650,
+                reasoning: "Skvěle doplňuje tvůj zájem o péči o sebe."
             });
             pool.push({
-                title: "Bezdrátová nabíjecí podložka",
-                description: "Pro mobil, hodinky i sluchátka najednou.",
+                title: "Hedvábný povlak na polštář",
+                description: "Luxusní doplněk pro zdravější pleť a vlasy.",
                 estimatedPrice: 800,
-                reasoning: "Praktický doplněk pro tech nadšence."
+                reasoning: "Péče o sebe pokračuje i ve spánku."
             });
         }
 
-        // 2. Pájení / DIY elektronika
-        const isSoldering = allText.includes('páje') || allText.includes('pájk') || allText.includes('flux') ||
-            allText.includes('cín') || allText.includes('solder');
-
-        if (isSoldering) {
+        // 2. Domov / Povlečení / Byt
+        if (allText.includes('povlečení') || allText.includes('mikroplyš') || allText.includes('byt') || allText.includes('domov') || allText.includes('polštář')) {
             pool.push({
-                title: "Třetí ruka s lupou a LED osvětlením",
+                title: "Teplý fleecový pléd",
+                description: "Měkká deka na zimní večery u televize.",
+                estimatedPrice: 600,
+                reasoning: "Dokonalý doplněk k útulnému povlečení."
+            });
+            pool.push({
+                title: "Aromatický difuzér s oleji",
+                description: "Pro příjemnou vůni a atmosféru v ložnici.",
+                estimatedPrice: 550,
+                reasoning: "Zútulní prostor, kde máš nové povlečení."
+            });
+        }
+
+        // 3. Nářadí / Kutil / Dílna
+        if (allText.includes('nářadí') || allText.includes('kutil') || allText.includes('dílna') || allText.includes('šroub')) {
+            pool.push({
+                title: "Magnetický náramek na šroubky",
+                description: "Nositelný magnet pro práci s drobnými součástkami.",
+                estimatedPrice: 350,
+                reasoning: "Šikovný pomocník pro tvé kutilské projekty."
+            });
+            pool.push({
+                title: "LED čelovka s vysokým svitem",
+                description: "Pro práci ve stísněných nebo tmavých prostorech.",
+                estimatedPrice: 450,
+                reasoning: "Nezbytnost v každé dílně."
+            });
+        }
+
+        // 4. Elektronika / Tech
+        if (allText.includes('logitech') || allText.includes('mouse') || allText.includes('myš') ||
+            allText.includes('drone') || allText.includes('dji') || allText.includes('dron') ||
+            allText.includes('watch') || allText.includes('hodinky') || allText.includes('prsten') ||
+            allText.includes('projektor') || allText.includes('sluchátka') || allText.includes('mobil') ||
+            allText.includes('samsung') || allText.includes('fractal') || allText.includes('pc')) {
+            pool.push({
+                title: "USB-C hub / dokovací stanice",
+                description: "Pro připojení všech zařízení na jednom místě.",
+                estimatedPrice: 1200,
+                reasoning: "Praktický doplněk pro tech nadšence."
+            });
+            pool.push({
+                title: "Bezdrátová nabíjecí podložka 3v1",
+                description: "Pro mobil, hodinky i sluchátka najednou.",
+                estimatedPrice: 800,
+                reasoning: "Elegantní řešení pro nabíjení gadgetů."
+            });
+        }
+
+        // 5. Pájení / DIY elektronika
+        if (allText.includes('páje') || allText.includes('pájk') || allText.includes('flux') || allText.includes('cín')) {
+            pool.push({
+                title: "Třetí ruka s lupou a LED",
                 description: "Držák pro přesné pájení s integrovanou lupou.",
                 estimatedPrice: 450,
                 reasoning: "Nezbytnost pro každého, kdo páje."
             });
             pool.push({
-                title: "Sada kvalitních pinzet pro SMD",
-                description: "Antistatické pinzety různých tvarů.",
+                title: "Sada antistatických pinzet",
+                description: "Různé tvary pro práci s SMD součástkami.",
                 estimatedPrice: 350,
-                reasoning: "Pro přesnou práci s malými součástkami."
+                reasoning: "Pro přesnou práci s malými díly."
             });
         }
 
-        // 3. Auto / Car accessories
-        const isCar = allText.includes('auto') || allText.includes('podložk') || allText.includes('detektor') ||
-            allText.includes('radar') || allText.includes('vysavač') || allText.includes('genevo') ||
-            allText.includes('eibach');
-
-        if (isCar) {
+        // 6. Auto
+        if (allText.includes('auto') || allText.includes('podložk') || allText.includes('detektor') ||
+            allText.includes('radar') || allText.includes('vysavač') || allText.includes('genevo') || allText.includes('eibach')) {
             pool.push({
-                title: "Autokosmetika - sada na detailing",
-                description: "Profesionální set na péči o lak a interiér.",
+                title: "Sada na detailing auta",
+                description: "Profesionální péče o lak a interiér.",
                 estimatedPrice: 900,
                 reasoning: "Pro někoho, kdo si potrpí na své auto."
             });
-            pool.push({
-                title: "Organizér do kufru auta",
-                description: "Skládací box na udržení pořádku v kufru.",
-                estimatedPrice: 600,
-                reasoning: "Praktický doplněk pro každého řidiče."
-            });
         }
 
-        // 4. Gaming
-        const isGaming = allText.includes('volant') || allText.includes('ps5') || allText.includes('xbox') ||
-            allText.includes('rally') || allText.includes('assetto') || allText.includes('corsa') ||
-            allText.includes('hra') || allText.includes('game') || allText.includes('playstation');
-
-        if (isGaming) {
+        // 7. Gaming
+        if (allText.includes('volant') || allText.includes('ps5') || allText.includes('xbox') ||
+            allText.includes('rally') || allText.includes('assetto') || allText.includes('game')) {
             pool.push({
-                title: "Herní podložka pod myš XXL",
-                description: "Velká podložka pro racing setup nebo FPS hry.",
+                title: "Herní podložka XXL",
+                description: "Velká podložka pro racing nebo FPS setup.",
                 estimatedPrice: 500,
                 reasoning: "Upgrade pro tvůj herní setup."
             });
-            pool.push({
-                title: "RGB LED pásek pro gaming setup",
-                description: "Ambientní osvětlení pro lepší atmosféru.",
-                estimatedPrice: 400,
-                reasoning: "Vizuální vylepšení herního prostředí."
-            });
         }
 
-        // 5. 3D tisk
-        const is3DPrint = allText.includes('3d') || allText.includes('tiskárna') || allText.includes('filament') ||
-            allText.includes('bambu') || allText.includes('prusa') || allText.includes('ender');
-
-        if (is3DPrint) {
+        // 8. 3D tisk
+        if (allText.includes('3d') || allText.includes('filament') || allText.includes('bambu') || allText.includes('prusa')) {
             pool.push({
                 title: "Sada kvalitních filamentů",
                 description: "Kolekce PLA/PETG v různých barvách.",
                 estimatedPrice: 800,
-                reasoning: "Materiál na další projekty nikdy není dost."
-            });
-            pool.push({
-                title: "Sada nástrojů pro 3D tisk",
-                description: "Škrabky, kleště, pilníky pro post-processing.",
-                estimatedPrice: 450,
-                reasoning: "Pro dokonalé dokončení výtisků."
+                reasoning: "Materiál na další projekty."
             });
         }
 
-        // 6. Doplněk k prvnímu dárku (vždy přidat)
-        const firstGift = wishes[0];
-        pool.push({
-            title: `Příslušenství k: ${firstGift.title}`,
-            description: `Kvalitní doplněk, který rozšíří možnosti "${firstGift.title}".`,
-            estimatedPrice: firstGift.price ? Math.round(firstGift.price * 0.25) : 400,
-            reasoning: "Vybrali jsme podle prvního přání v tvém seznamu."
-        });
+        // Záložní univerzální tipy (pouze pokud máme málo tipů)
+        if (pool.length < 2) {
+            pool.push({
+                title: "Předplatné oblíbené služby",
+                description: "Netflix, Spotify nebo Audible na pár měsíců.",
+                estimatedPrice: 500,
+                reasoning: "Prémiová zábava pro volné chvíle."
+            });
+            pool.push({
+                title: "Degustační balíček kávy",
+                description: "Výběr zrnkových káv z různých koutů světa.",
+                estimatedPrice: 450,
+                reasoning: "Pro milovníky kvalitní kávy."
+            });
+        }
 
         // Zamíchat a vrátit 3
         return pool.sort(() => 0.5 - Math.random()).slice(0, 3);
