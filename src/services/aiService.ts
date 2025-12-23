@@ -22,9 +22,9 @@ export class AIService {
             this.genAI = new GoogleGenerativeAI(API_KEY)
         }
 
-        // Try gemini-1.5-flash first (cheaper and faster)
+        // Try gemini-1.5-flash first with v1 API
         let modelName = 'gemini-1.5-flash'
-        let model = this.genAI.getGenerativeModel({ model: modelName })
+        let model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: 'v1' })
 
         const giftsList = gifts
             .map((g) => `- ${g.title}${g.description ? `: ${g.description}` : ''}${g.price ? ` (${g.price} ${g.currency})` : ''}`)
@@ -52,11 +52,11 @@ export class AIService {
             try {
                 result = await model.generateContent(prompt)
             } catch (e: any) {
-                // Fallback to gemini-pro if flash is not found
+                // Fallback to gemini-pro (v1) if flash is not found
                 if (e.message?.includes('not found') || e.message?.includes('404')) {
-                    console.warn('Gemini 1.5 Flash not found, falling back to gemini-pro')
+                    console.warn('Gemini 1.5 Flash not found on v1, falling back to gemini-pro on v1')
                     modelName = 'gemini-pro'
-                    model = this.genAI.getGenerativeModel({ model: modelName })
+                    model = this.genAI.getGenerativeModel({ model: modelName }, { apiVersion: 'v1' })
                     result = await model.generateContent(prompt)
                 } else {
                     throw e
