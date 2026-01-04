@@ -277,18 +277,15 @@ export class AIService {
 
     private static parseRobustJSON(text: string): any {
         if (!text) return null;
-        // Odstranění markdownu, pokud tam je
         const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
         try {
             return JSON.parse(cleaned);
         } catch (e) {
-            // Pokus o extrakci JSONu regulárním výrazem
             const match = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
             if (match) {
                 try {
                     return JSON.parse(match[0]);
                 } catch (e2) {
-                    // Poslední záchrana: zkusit opravit chybějící závorky (u uříznuté odpovědi)
                     try {
                         let fixed = match[0];
                         const openBraces = (fixed.match(/\{/g) || []).length;
@@ -301,7 +298,7 @@ export class AIService {
 
                         return JSON.parse(fixed);
                     } catch (e3) {
-                        console.error("DárekList: JSON parsování selhalo i po pokusu o opravu.");
+                        console.error("DárekList: JSON parsování selhalo.");
                         throw e;
                     }
                 }
@@ -313,87 +310,75 @@ export class AIService {
     static async analyzeGiftsAndGetTips(wishes: Gift[], ownedGifts: Gift[], occasion?: string): Promise<AITip[]> {
         if (!this.genAI) return this.getFallbackTips(wishes);
 
-        const wishesText = wishes.length > 0
+        const wishesList = wishes.length > 0
             ? wishes.map((w, i) => `${i + 1}. ${w.title}${w.description ? ` (${w.description})` : ''}`).join('\n')
-            : 'Prázdný (navrhni univerzální dárky)';
+            : 'Prázdný seznam';
 
         const prompt = `
-      Jsi špičkový expert na dárky. Na základě seznamu přání navrhni 3 další skvělé dárky.
+      OSLAVENEC JIŽ MÁ / NECHCE:
+      ${ownedGifts.length > 0 ? ownedGifts.map(g => g.title).join(', ') : 'Nic'}
       
-      SEZNAM PŘÁNÍ:
-      ${wishesText}
+      KONTEXT:
+      ${wishesList}
       
-       ${occasion ? `PŘÍLEŽITOST: ${occasion}` : ''}
+      ${occasion ? `PŘÍLEŽITOST: ${occasion}` : ''}
       
-      POŽADAVKY:
-      1. Navrhni přesně 3 dárky v češtině.
-      2. Odpověz VÝHRADNĚ ve formátu JSON podle schématu níže.
-      3. Nepoužívej žádný jiný text před ani za JSONem.
-      
-      FORMÁT :
+      Odpověz VÝHRADNĚ ve formátu JSON:
       {
         "tips": [
-          {"title": "název", "description": "krátký popis", "estimatedPrice": 123, "reasoning": "vysvětlení"}
+          {"title": "název", "description": "popis", "estimatedPrice": 123, "reasoning": "vysvětlení"}
         ]
       }
     `;
 
         const modelsToTry = [
-            // Gemini 3 Flash Preview (v1beta) - v logách prokázal, že odpovídá
-            { name: 'gemini-3-flash-preview', version: 'v1beta', useJsonMode: true },
-            { name: 'gemini-3-pro-preview', version: 'v1beta', useJsonMode: true },
-
-            // Gemini 2.5 Flash (v1beta má lepší podporu responseMimeType)
-            { name: 'gemini-2.5-flash', version: 'v1beta', useJsonMode: true },
-            { name: 'gemini-2.5-flash', version: 'v1', useJsonMode: false },
-
-            // Záložní stabilní modely
-            { name: 'gemini-2.0-flash', version: 'v1', useJsonMode: false },
-            { name: 'gemini-1.5-flash', version: 'v1', useJsonMode: false }
+            { name: 'gemini-3-flash-preview', version: 'v1beta', jsonMode: true },
+            { name: 'gemini-2.5-flash', version: 'v1beta', jsonMode: true },
+            { name: 'gemini-2.0-flash', version: 'v1beta', jsonMode: true },
+            { name: 'gemini-1.5-flash', version: 'v1', jsonMode: false }
         ];
 
         let lastError: any = null;
 
         for (const modelCfg of modelsToTry) {
-            try {
-                const config: any = {
-                    temperature: 0.8,
-                    maxOutputTokens: 2048,
-                };
+            const attempts = modelCfg.jsonMode ? [true, false] : [false];
+            for (const useJson of attempts) {
+                try {
+                    const config: any = {
+                        temperature: 0.7,
+                        maxOutputTokens: 2048,
+                    };
+                    if (useJson) config.responseMimeType = "application/json";
 
-                if (modelCfg.useJsonMode) {
-                    // @ts-ignore - Vyžaduje validní JSON odpověď (funguje hlavně na v1beta)
-                    config.responseMimeType = "application/json";
-                }
+                    const model = this.genAI!.getGenerativeModel(
+                        { model: modelCfg.name, generationConfig: config },
+                        { apiVersion: modelCfg.version as any }
+                    );
 
-                const model = this.genAI!.getGenerativeModel(
-                    { model: modelCfg.name, generationConfig: config },
-                    { apiVersion: modelCfg.version as any }
-                );
+                    console.log(`DárekList: Zkouším ${modelCfg.name} (${modelCfg.version}, JSON: ${useJson})...`);
+                    const result = await model.generateContent(prompt);
+                    const response = await result.response;
+                    const text = response.text();
 
-                console.log(`DárekList: Zkouším model ${modelCfg.name} (${modelCfg.version}, JSON logic: ${modelCfg.useJsonMode})...`);
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const text = response.text();
+                    if (!text) continue;
 
-                if (!text) continue;
-
-                const data = this.parseRobustJSON(text);
-                const tips = data.tips || data;
-
-                return tips.map((t: any) => ({ ...t, source: 'ai' }));
-            } catch (error: any) {
-                lastError = error;
-                const status = error.message?.match(/\d{3}/)?.[0];
-                console.warn(`DárekList: Model ${modelCfg.name} neuspěl [${status || 'Error'}]:`, error.message);
-
-                if (status === '429') {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const data = this.parseRobustJSON(text);
+                    const tipsList = data.tips || (Array.isArray(data) ? data : []);
+                    return tipsList.map((t: any) => ({ ...t, source: 'ai' }));
+                } catch (error: any) {
+                    lastError = error;
+                    if (useJson && (error.message?.includes('400') || error.message?.includes('Unknown name'))) {
+                        console.warn(`DárekList: ${modelCfg.name} nepodporuje JSON Mode, zkouším bez něj...`);
+                        continue;
+                    }
+                    console.warn(`DárekList: ${modelCfg.name} selhal:`, error.message);
+                    if (error.message?.includes('429')) await new Promise(r => setTimeout(r, 1000));
+                    break;
                 }
             }
         }
 
-        console.error('DárekList: Všechny AI modely vyčerpány. Používám Smart Fallback.', lastError);
+        console.error('DárekList: AI vyčerpáno.', lastError);
         return this.getFallbackTips(wishes);
     }
 }
