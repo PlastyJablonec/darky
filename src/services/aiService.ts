@@ -314,21 +314,18 @@ export class AIService {
     `;
 
         const modelsToTry = [
-            // Nejvíc "cool" modely roku 2026
-            { name: 'gemini-3-flash', version: 'v1beta' },
+            // Potvrzený funkční model pro rok 2026 (z vašich logů)
+            { name: 'gemini-2.5-flash', version: 'v1' },
+            { name: 'gemini-2.5-flash-lite', version: 'v1' },
+
+            // Gemini 3 (zkoušíme varianty pro případ, že už jsou dostupné)
+            { name: 'gemini-3-flash-preview', version: 'v1beta' },
             { name: 'gemini-3-flash', version: 'v1' },
-            { name: 'gemini-3-pro', version: 'v1beta' },
             { name: 'gemini-3-pro', version: 'v1' },
 
-            // Modely řady 2.5 a 2.0
-            { name: 'gemini-2.5-flash', version: 'v1' },
-            { name: 'gemini-2.5-pro', version: 'v1' },
-            { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
+            // Záložní 2.0 a 1.5
             { name: 'gemini-2.0-flash', version: 'v1' },
-
-            // Záložní 1.5 modely
-            { name: 'gemini-1.5-flash', version: 'v1' },
-            { name: 'gemini-1.5-pro', version: 'v1' }
+            { name: 'gemini-1.5-flash', version: 'v1' }
         ];
 
         let lastError: any = null;
@@ -341,20 +338,22 @@ export class AIService {
                         generationConfig: {
                             temperature: 0.8,
                             maxOutputTokens: 1024,
+                            // @ts-ignore - Vynucení JSON formátu na straně Google API
+                            responseMimeType: "application/json",
                         }
                     },
                     { apiVersion: modelCfg.version as any }
                 );
 
-                console.log(`DárekList: Zkouším model ${modelCfg.name} (${modelCfg.version})...`);
+                console.log(`DárekList: Zkouším model ${modelCfg.name} (${modelCfg.version}) v JSON módu...`);
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 const text = response.text();
 
                 if (!text) continue;
 
-                const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-                const data = JSON.parse(jsonStr);
+                // V JSON módu už text neobsahuje markdown ```json ... ```
+                const data = JSON.parse(text);
                 const tips = data.tips || data;
 
                 return tips.map((t: any) => ({ ...t, source: 'ai' }));
@@ -363,7 +362,6 @@ export class AIService {
                 const status = error.message?.match(/\d{3}/)?.[0];
                 console.warn(`DárekList: Model ${modelCfg.name} (${modelCfg.version}) neuspěl [${status || 'Error'}]:`, error.message);
 
-                // Pokud je to kvóta 429, počkáme malou chvíli před dalším pokusem (některé modely mají sdílenou kvótu)
                 if (status === '429') {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
