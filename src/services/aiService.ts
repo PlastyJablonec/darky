@@ -315,18 +315,31 @@ export class AIService {
             : 'Prázdný seznam';
 
         const prompt = `
-      OSLAVENEC JIŽ MÁ / NECHCE:
-      ${ownedGifts.length > 0 ? ownedGifts.map(g => g.title).join(', ') : 'Nic'}
-      
-      KONTEXT:
+      Jsi špičkový expert na dárky a nákupní poradce. Tvým úkolem je navrhnout 3 dárky, které na seznamu NEROZUMI, ale skvěle ho doplňují.
+
+      SEZNAM PŘÁNÍ (Tyto věci uživatel CHCE, takže je NIKDY nenavrhuj znovu):
       ${wishesList}
+      
+      UŽIVATEL JIŽ VLASTNÍ / NECHCE:
+      ${ownedGifts.length > 0 ? ownedGifts.map(g => g.title).join(', ') : 'Nic'}
       
       ${occasion ? `PŘÍLEŽITOST: ${occasion}` : ''}
       
-      Odpověz VÝHRADNĚ ve formátu JSON:
+      INSTRUKCE PRO NÁVRH:
+      1. ABSOLUTNÍ ZÁKAZ DUPLICIT: Nenavrhuj nic, co už je na Seznamu přání nebo v seznamu Již vlastní.
+      2. KONTEXTOVÉ DOPLNĚNÍ (DÁREK, KTERÝ SEDÍ): Pokud má uživatel na seznamu konkrétní techniku (např. Samsung Watch Ultra), navrhni k nim doplněk (např. kvalitní náhradní řemínek, nabíjecí stojánek nebo ochranu), ale ne další podobné hodinky.
+      3. BUĎ KONKRÉTNÍ: Místo obecného "příslušenství" navrhni konkrétní a zajímavý produkt (např. "Designová dockovací stanice pro Apple/Samsung").
+      4. ČESKY: Celá odpověď musí být v češtině.
+
+      Odpověď vrať VÝHRADNĚ jako JSON objekt:
       {
         "tips": [
-          {"title": "název", "description": "popis", "estimatedPrice": 123, "reasoning": "vysvětlení"}
+          {
+            "title": "název dárku",
+            "description": "stručný popis (max 150 znaků)",
+            "estimatedPrice": 1200, 
+            "reasoning": "vysvětlení, proč je to skvělý doplněk k existujícímu seznamu"
+          }
         ]
       }
     `;
