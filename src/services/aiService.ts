@@ -8,13 +8,14 @@ export interface AITip {
     description: string
     estimatedPrice?: number
     reasoning: string
+    source?: 'ai' | 'fallback'
 }
 
 export class AIService {
     private static genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
     private static getFallbackTips(wishes: Gift[]): AITip[] {
-        console.log("DárekList: Aktivován Smart Fallback v4.1 (Enhanced Keywords)");
+        console.log("DárekList: Generuji tipy ze Smart Fallback v4.2");
 
         const allText = wishes.map(w => `${w.title} ${w.description || ''}`).join(' ').toLowerCase();
         const pool: AITip[] = [];
@@ -32,25 +33,29 @@ export class AIService {
                 title: "Sada relaxačních esenciálních olejů",
                 description: "Pro domácí wellness a hloubkovou relaxaci.",
                 estimatedPrice: 650,
-                reasoning: "Ideální doplněk pro někoho, kdo o sebe rád pečuje."
+                reasoning: "Ideální doplněk pro někoho, kdo o sebe rád pečuje.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Hedvábný povlak na polštář",
                 description: "Luxusní doplněk pro zdravější pleť a vlasy.",
                 estimatedPrice: 800,
-                reasoning: "Péče o pleť a vlasy pokračuje i během spánku."
+                reasoning: "Péče o pleť a vlasy pokračuje i během spánku.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Bambusový stolek do vany",
                 description: "Pro relaxaci s knihou nebo sklenkou vína.",
                 estimatedPrice: 750,
-                reasoning: "Pro dokonalý zážitek z domácích lázní."
+                reasoning: "Pro dokonalý zážitek z domácích lázní.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Kosmetické zrcátko s LED osvětlením",
                 description: "S nastavitelným jasem pro perfektní líčení.",
                 estimatedPrice: 850,
-                reasoning: "Nepostradatelný pomocník každé beauty rutiny."
+                reasoning: "Nepostradatelný pomocník každé beauty rutiny.",
+                source: 'fallback'
             });
         }
 
@@ -65,19 +70,22 @@ export class AIService {
                 title: "Teplý fleecový pléd",
                 description: "Měkká deka na zimní večery u televize.",
                 estimatedPrice: 600,
-                reasoning: "Pro ještě útulnější a pohodovější domov."
+                reasoning: "Pro ještě útulnější a pohodovější domov.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Aromatický difuzér s oleji",
                 description: "Pro příjemnou vůni a atmosféru v interiéru.",
                 estimatedPrice: 550,
-                reasoning: "Vytvoří v domově uklidňující a voňavé prostředí."
+                reasoning: "Vytvoří v domově uklidňující a voňavé prostředí.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Designová stolní lampa",
                 description: "S teplým světlem pro večerní čtení.",
                 estimatedPrice: 1200,
-                reasoning: "Krásný a funkční doplněk, který oživí interiér."
+                reasoning: "Krásný a funkční doplněk, který oživí interiér.",
+                source: 'fallback'
             });
         }
 
@@ -91,19 +99,22 @@ export class AIService {
                 title: "Magnetický náramek na šroubky",
                 description: "Nositelný magnet pro práci s drobnými součástkami.",
                 estimatedPrice: 350,
-                reasoning: "Praktický pomocník pro každého kutila."
+                reasoning: "Praktický pomocník pro každého kutila.",
+                source: 'fallback'
             });
             pool.push({
                 title: "LED čelovka s vysokým svitem",
                 description: "Pro práci ve stísněných nebo tmavých prostorech.",
                 estimatedPrice: 450,
-                reasoning: "Nezbytnost pro práci, kde potřebujete volné ruce."
+                reasoning: "Nezbytnost pro práci, kde potřebujete volné ruce.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Organizér na drobné nářadí",
                 description: "Přehledný kufřík pro šroubky, bity a hmoždinky.",
                 estimatedPrice: 400,
-                reasoning: "Udrží v dílně nebo garáži perfektní systém."
+                reasoning: "Udrží v dílně nebo garáži perfektní systém.",
+                source: 'fallback'
             });
         }
 
@@ -120,19 +131,22 @@ export class AIService {
                 title: "USB-C dokovací stanice",
                 description: "Pro připojení všech periferií jediným kabelem.",
                 estimatedPrice: 1200,
-                reasoning: "Zvýší komfort při práci i zábavě s technikou."
+                reasoning: "Zvýší komfort při práci i zábavě s technikou.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Bezdrátová nabíjecí podložka 3v1",
                 description: "Pro mobil, hodinky i sluchátka na jednom místě.",
                 estimatedPrice: 800,
-                reasoning: "Moderní a čisté řešení pro nabíjení všech zařízení."
+                reasoning: "Moderní a čisté řešení pro nabíjení všech zařízení.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Lokalizační čip (AirTag/SmartTag)",
                 description: "Pro snadné nalezení klíčů, peněženky nebo batohu.",
                 estimatedPrice: 850,
-                reasoning: "Praktický gadget pro klidnější každodenní život."
+                reasoning: "Praktický gadget pro klidnější každodenní život.",
+                source: 'fallback'
             });
         }
 
@@ -147,19 +161,22 @@ export class AIService {
                 title: "Sada na domácí pěstování bylinek",
                 description: "Inteligentní květináč s automatickým svícením.",
                 estimatedPrice: 1500,
-                reasoning: "Pro čerstvé bylinky při vaření po celý rok."
+                reasoning: "Pro čerstvé bylinky při vaření po celý rok.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Kvalitní kuchařský nůž",
                 description: "Z vysoce kvalitní nerezové oceli pro přesný řez.",
                 estimatedPrice: 1800,
-                reasoning: "Základní kámen výbavy každého nadšeného kuchaře."
+                reasoning: "Základní kámen výbavy každého nadšeného kuchaře.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Vakuová pumpa na víno",
                 description: "Pro uchování chuti a vůně i v otevřené lahvi.",
                 estimatedPrice: 350,
-                reasoning: "Zajistí, že víno zůstane déle čerstvé a chutné."
+                reasoning: "Zajistí, že víno zůstane déle čerstvé a chutné.",
+                source: 'fallback'
             });
         }
 
@@ -174,19 +191,22 @@ export class AIService {
                 title: "Cestovní organizéry do zavazadla",
                 description: "Sada pro dokonale přehledné a úsporné balení.",
                 estimatedPrice: 450,
-                reasoning: "Ušetří čas i místo při balení na každou cestu."
+                reasoning: "Ušetří čas i místo při balení na každou cestu.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Vysoce výkonná powerbanka",
                 description: "S kapacitou 20000mAh pro vícenásobné nabití.",
                 estimatedPrice: 900,
-                reasoning: "Energie na cesty pro mobil i další elektroniku."
+                reasoning: "Energie na cesty pro mobil i další elektroniku.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Stírací mapa světa",
                 description: "Elegantní dekorace pro zaznamenávání procestovaných zemí.",
                 estimatedPrice: 390,
-                reasoning: "Inspirace pro další dobrodružství a vzpomínky z cest."
+                reasoning: "Inspirace pro další dobrodružství a vzpomínky z cest.",
+                source: 'fallback'
             });
         }
 
@@ -200,19 +220,22 @@ export class AIService {
                 title: "Stylová kovová záložka",
                 description: "Elegantní záložka pro vášnivé čtenáře.",
                 estimatedPrice: 200,
-                reasoning: "Krásný a praktický doplněk pro každou rozečtenou knihu."
+                reasoning: "Krásný a praktický doplněk pro každou rozečtenou knihu.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Klipová lampička na čtení",
                 description: "Kompaktní světlo pro čtení v noci bez rušení okolí.",
                 estimatedPrice: 350,
-                reasoning: "Umožní se začíst do příběhu kdekoli a kdykoli."
+                reasoning: "Umožní se začíst do příběhu kdekoli a kdykoli.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Předplatné literárního časopisu",
                 description: "Pravidelná dávka čtení a inspirace do schránky.",
                 estimatedPrice: 500,
-                reasoning: "Pro stálý kontakt s novinkami ze světa literatury."
+                reasoning: "Pro stálý kontakt s novinkami ze světa literatury.",
+                source: 'fallback'
             });
         }
 
@@ -222,25 +245,29 @@ export class AIService {
                 title: "Univerzální dárkový poukaz",
                 description: "Do oblíbeného nákupního centra nebo e-shopu.",
                 estimatedPrice: 1000,
-                reasoning: "Jistota, že si oslavenec vybere přesně to, co chce."
+                reasoning: "Jistota, že si oslavenec vybere přesně to, co chce.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Předplatné streamovací služby",
                 description: "Netflix, Disney+ nebo HBO na pár měsíců zábavy.",
                 estimatedPrice: 600,
-                reasoning: "Přinese spoustu filmových a seriálových zážitků."
+                reasoning: "Přinese spoustu filmových a seriálových zážitků.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Degustační výběrová káva",
                 description: "Balíček čerstvě pražených zrn z celého světa.",
                 estimatedPrice: 480,
-                reasoning: "Zpříjemní každé ráno šálkem skvělé chuti."
+                reasoning: "Zpříjemní každé ráno šálkem skvělé chuti.",
+                source: 'fallback'
             });
             pool.push({
                 title: "Sada na výrobu vlastního ginu",
                 description: "Kreativní DIY set pro přípravu vlastních příchutí.",
                 estimatedPrice: 850,
-                reasoning: "Originální zážitek pro všechny, co rádi experimentují."
+                reasoning: "Originální zážitek pro všechny, co rádi experimentují.",
+                source: 'fallback'
             });
         }
 
@@ -309,6 +336,7 @@ export class AIService {
                     { apiVersion: modelCfg.version as any }
                 );
 
+                console.log(`DárekList: Zkouším AI model ${modelCfg.name}...`);
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 const text = response.text();
@@ -317,7 +345,10 @@ export class AIService {
 
                 const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
                 const data = JSON.parse(jsonStr);
-                return data.tips || data;
+                const tips = data.tips || data;
+
+                // Přidat příznak AI zdroje
+                return tips.map((t: any) => ({ ...t, source: 'ai' }));
             } catch (error: any) {
                 lastError = error;
                 console.warn(`Model ${modelCfg.name} (${modelCfg.version}) failed:`, error.message);

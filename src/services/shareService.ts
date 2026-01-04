@@ -120,7 +120,6 @@ export class ShareService {
     }
   }
 
-  // Získání seznamů sdílených se mnou
   static async getSharedWithMe(userId: string) {
     try {
       const { data, error } = await supabase
@@ -135,7 +134,12 @@ export class ShareService {
             occasion,
             share_id,
             created_at,
-            user_id
+            user_id,
+            profiles:user_id (
+              id,
+              display_name,
+              email
+            )
           )
         `)
         .eq('shared_with', userId)
@@ -146,18 +150,26 @@ export class ShareService {
         return []
       }
 
-      // Transformovat data do očekávaného formátu
-      const transformedData = (data || []).map(share => ({
-        ...share,
-        wishlists: {
-          ...share.wishlist,
-          users: {
-            id: share.wishlist?.user_id,
-            email: `user-${share.wishlist?.user_id?.slice(0, 8)}`, // Placeholder
-            raw_user_meta_data: {}
+      // Transformovat data do očekávaného formátu pro komponentu
+      const transformedData = (data || []).map(share => {
+        const wishlist = share.wishlist as any;
+        const profile = wishlist?.profiles;
+
+        return {
+          ...share,
+          wishlists: {
+            ...wishlist,
+            users: {
+              id: wishlist?.user_id,
+              email: profile?.email || `user-${wishlist?.user_id?.slice(0, 8)}`,
+              display_name: profile?.display_name,
+              raw_user_meta_data: {
+                display_name: profile?.display_name
+              }
+            }
           }
         }
-      }))
+      })
 
       return transformedData
     } catch (err) {
@@ -281,7 +293,7 @@ export class ShareService {
       // Přidáme uživatele z veřejného odkazu (kteří nejsou už v shares)
       if (publicViews) {
         const sharedUserIds = new Set(shares?.map(s => s.shared_with) || [])
-        
+
         for (const view of publicViews) {
           if (!sharedUserIds.has(view.viewer_id)) {
             // Získáme profil uživatele
@@ -360,7 +372,7 @@ export class ShareService {
       return true
     } catch (err) {
       console.error('Chyba při removeShare:', err)
-      return false  
+      return false
     }
   }
 

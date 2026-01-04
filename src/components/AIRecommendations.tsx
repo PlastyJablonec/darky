@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Sparkles, Loader2, Plus, ChevronRight, Brain } from 'lucide-react'
+import { Sparkles, Loader2, Plus, Brain } from 'lucide-react'
 import { aiService, AITip } from '@/services/aiService'
 import type { Gift } from '@/types'
 
@@ -96,8 +96,17 @@ export function AIRecommendations({ wishes, receivedGifts, occasion, onAddGift }
 
                                 <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-50">
                                     <span className="text-xs text-gray-400 flex items-center">
-                                        <ChevronRight className="h-3 w-3" />
-                                        Tip na dárek
+                                        {tip.source === 'ai' ? (
+                                            <>
+                                                <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
+                                                <span className="text-amber-600 font-medium">AI Expert</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Brain className="h-3 w-3 mr-1 text-indigo-400" />
+                                                <span>Chytrý návrh</span>
+                                            </>
+                                        )}
                                     </span>
                                     {onAddGift && (
                                         <button
