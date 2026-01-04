@@ -317,8 +317,8 @@ export class AIService {
             { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
             { name: 'gemini-1.5-flash', version: 'v1beta' },
             { name: 'gemini-1.5-flash', version: 'v1' },
-            { name: 'gemini-1.5-pro', version: 'v1beta' },
-            { name: 'gemini-pro', version: 'v1' }
+            { name: 'gemini-1.5-pro', version: 'v1' },
+            { name: 'gemini-1.5-flash-8b', version: 'v1' }
         ];
 
         let lastError: any = null;
@@ -336,7 +336,7 @@ export class AIService {
                     { apiVersion: modelCfg.version as any }
                 );
 
-                console.log(`DárekList: Zkouším AI model ${modelCfg.name}...`);
+                console.log(`DárekList: Zkouším AI model ${modelCfg.name} (${modelCfg.version})...`);
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 const text = response.text();
@@ -351,16 +351,12 @@ export class AIService {
                 return tips.map((t: any) => ({ ...t, source: 'ai' }));
             } catch (error: any) {
                 lastError = error;
-                console.warn(`Model ${modelCfg.name} (${modelCfg.version}) failed:`, error.message);
-
-                if (error.message?.includes('429')) {
-                    // Quota exceeded - wait or try different model (though usually quota is per project)
-                    continue;
-                }
+                // Pokud jde o chybu kvóty (429), zkusíme další model, ale často je kvóta na celý projekt
+                console.warn(`DárekList: Model ${modelCfg.name} neuspěl:`, error.message);
             }
         }
 
-        console.error('AI Service exhausted all models. Using smart fallback.', lastError);
+        console.error('DárekList: Všechny AI modely vyčerpány nebo nedostupné (např. omezení kvóty). Používám Smart Fallback.', lastError);
         return this.getFallbackTips(wishes);
     }
 }

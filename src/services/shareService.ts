@@ -134,12 +134,7 @@ export class ShareService {
             occasion,
             share_id,
             created_at,
-            user_id,
-            profiles:user_id (
-              id,
-              display_name,
-              email
-            )
+            user_id
           )
         `)
         .eq('shared_with', userId)
@@ -150,18 +145,30 @@ export class ShareService {
         return []
       }
 
+      if (!data || data.length === 0) return []
+
+      // Získat unikátní ID vlastníků seznamů
+      const ownerIds = [...new Set(data.map(share => (share.wishlist as any)?.user_id).filter(Boolean))]
+
+      // Načíst profily vlastníků v samostatném dotazu
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, email')
+        .in('id', ownerIds)
+
       // Transformovat data do očekávaného formátu pro komponentu
-      const transformedData = (data || []).map(share => {
+      const transformedData = data.map(share => {
         const wishlist = share.wishlist as any;
-        const profile = wishlist?.profiles;
+        const ownerId = wishlist?.user_id;
+        const profile = profiles?.find(p => p.id === ownerId);
 
         return {
           ...share,
           wishlists: {
             ...wishlist,
             users: {
-              id: wishlist?.user_id,
-              email: profile?.email || `user-${wishlist?.user_id?.slice(0, 8)}`,
+              id: ownerId,
+              email: profile?.email || `user-${ownerId?.slice(0, 8)}`,
               display_name: profile?.display_name,
               raw_user_meta_data: {
                 display_name: profile?.display_name
