@@ -314,28 +314,21 @@ export class AIService {
     `;
 
         const modelsToTry = [
-            // Nejvíc "cool" modely v beta verzi
+            // Nejvíc "cool" modely roku 2026
+            { name: 'gemini-3-flash', version: 'v1beta' },
+            { name: 'gemini-3-flash', version: 'v1' },
+            { name: 'gemini-3-pro', version: 'v1beta' },
+            { name: 'gemini-3-pro', version: 'v1' },
+
+            // Modely řady 2.5 a 2.0
+            { name: 'gemini-2.5-flash', version: 'v1' },
+            { name: 'gemini-2.5-pro', version: 'v1' },
             { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
-            { name: 'gemini-2.0-flash-thinking-exp', version: 'v1beta' },
+            { name: 'gemini-2.0-flash', version: 'v1' },
 
-            // Standardní 1.5 Flash (v1beta bývá nejstabilnější pro nové klíče)
-            { name: 'gemini-1.5-flash', version: 'v1beta' },
-            { name: 'gemini-1.5-flash-latest', version: 'v1beta' },
-
-            // Standardní 1.5 Flash (v1 verze)
+            // Záložní 1.5 modely
             { name: 'gemini-1.5-flash', version: 'v1' },
-            { name: 'gemini-1.5-flash-latest', version: 'v1' },
-
-            // Slabší ale rychlé modely
-            { name: 'gemini-1.5-flash-8b', version: 'v1beta' },
-            { name: 'gemini-1.5-flash-8b', version: 'v1' },
-
-            // Pro modely (často mají nižší kvóty pro free tier)
-            { name: 'gemini-1.5-pro', version: 'v1beta' },
-            { name: 'gemini-1.5-pro', version: 'v1' },
-
-            // Starší modely jako poslední záchrana
-            { name: 'gemini-1.0-pro', version: 'v1' }
+            { name: 'gemini-1.5-pro', version: 'v1' }
         ];
 
         let lastError: any = null;
