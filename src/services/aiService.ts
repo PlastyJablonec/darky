@@ -275,95 +275,120 @@ export class AIService {
         return pool.sort(() => 0.5 - Math.random()).slice(0, 3);
     }
 
-    static async analyzeGiftsAndGetTips(wishes: Gift[], ownedGifts: Gift[], occasion?: string): Promise<AITip[]> {
-        if (!API_KEY) {
-            return this.getFallbackTips(wishes);
+    private static parseRobustJSON(text: string): any {
+        if (!text) return null;
+        // Odstranění markdownu, pokud tam je
+        const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
+        try {
+            return JSON.parse(cleaned);
+        } catch (e) {
+            // Pokus o extrakci JSONu regulárním výrazem
+            const match = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+            if (match) {
+                try {
+                    return JSON.parse(match[0]);
+                } catch (e2) {
+                    // Poslední záchrana: zkusit opravit chybějící závorky (u uříznuté odpovědi)
+                    try {
+                        let fixed = match[0];
+                        const openBraces = (fixed.match(/\{/g) || []).length;
+                        const closeBraces = (fixed.match(/\}/g) || []).length;
+                        if (openBraces > closeBraces) fixed += '}'.repeat(openBraces - closeBraces);
+
+                        const openBrackets = (fixed.match(/\[/g) || []).length;
+                        const closeBrackets = (fixed.match(/\]/g) || []).length;
+                        if (openBrackets > closeBrackets) fixed += ']'.repeat(openBrackets - closeBrackets);
+
+                        return JSON.parse(fixed);
+                    } catch (e3) {
+                        console.error("DárekList: JSON parsování selhalo i po pokusu o opravu.");
+                        throw e;
+                    }
+                }
+            }
+            throw e;
         }
+    }
 
-        const wishList = wishes
-            .map((g) => `- ${g.title}${g.description ? `: ${g.description}` : ''}${g.price ? ` (${g.price} ${g.currency})` : ''}`)
-            .join('\n');
+    static async analyzeGiftsAndGetTips(wishes: Gift[], ownedGifts: Gift[], occasion?: string): Promise<AITip[]> {
+        if (!this.genAI) return this.getFallbackTips(wishes);
 
-        const ownedList = ownedGifts
-            .map((g) => `- ${g.title}${g.description ? `: ${g.description}` : ''}`)
-            .join('\n');
+        const wishesText = wishes.length > 0
+            ? wishes.map((w, i) => `${i + 1}. ${w.title}${w.description ? ` (${w.description})` : ''}`).join('\n')
+            : 'Prázdný (navrhni univerzální dárky)';
 
         const prompt = `
-      Jsi špičkový expert na nákupy a dárky. Na základě seznamu přání navrhni 3 originální dárky, které by seznam skvěle DOPLNILY.
+      Jsi špičkový expert na dárky. Na základě seznamu přání navrhni 3 další skvělé dárky.
       
-      OSLAVENEC CHCE (analýza jeho stylu):
-      ${wishList || 'Seznam je prázdný.'}
+      SEZNAM PŘÁNÍ:
+      ${wishesText}
       
-      OSLAVENEC JIŽ MÁ:
-      ${ownedList || 'Žádné info.'}
+       ${occasion ? `PŘÍLEŽITOST: ${occasion}` : ''}
       
-      ${occasion ? `Příležitost: ${occasion}` : ''}
-
-      INSTRUKCE:
-      1. ANALYZUJ ZÁJMY: Pokud jsou na seznamu kosmetické produkty (krémy, parfémy), navrhni doplňky pro péči o pleť nebo relaxaci. Pokud je tam technika, navrhni gadgety.
-      2. BUĎ KONKRÉTNÍ: Místo "kosmetika" navrhni "Masážní kámen Gua Sha z růženínu".
-      3. VYHNOU SE DUPLICITÁM: Nenavrhuj věci, které už na seznamu jsou.
-      4. ČESKY: Celou odpověď napiš v češtině.
+      POŽADAVKY:
+      1. Navrhni přesně 3 dárky v češtině.
+      2. Odpověz VÝHRADNĚ ve formátu JSON podle schématu níže.
+      3. Nepoužívej žádný jiný text před ani za JSONem.
       
-      Odpověď vrať VÝHRADNĚ ve formátu JSON:
+      FORMÁT :
       {
         "tips": [
-          {"title": "název", "description": "krátký popis", "estimatedPrice": 123, "reasoning": "vysvětlení, jak to sedí k zájmům ze seznamu"}
+          {"title": "název", "description": "krátký popis", "estimatedPrice": 123, "reasoning": "vysvětlení"}
         ]
       }
     `;
 
         const modelsToTry = [
-            // Potvrzený funkční model pro rok 2026 (z vašich logů)
-            { name: 'gemini-2.5-flash', version: 'v1' },
-            { name: 'gemini-2.5-flash-lite', version: 'v1' },
+            // Gemini 3 Flash Preview (v1beta) - v logách prokázal, že odpovídá
+            { name: 'gemini-3-flash-preview', version: 'v1beta', useJsonMode: true },
+            { name: 'gemini-3-pro-preview', version: 'v1beta', useJsonMode: true },
 
-            // Gemini 3 (zkoušíme varianty pro případ, že už jsou dostupné)
-            { name: 'gemini-3-flash-preview', version: 'v1beta' },
-            { name: 'gemini-3-flash', version: 'v1' },
-            { name: 'gemini-3-pro', version: 'v1' },
+            // Gemini 2.5 Flash (v1beta má lepší podporu responseMimeType)
+            { name: 'gemini-2.5-flash', version: 'v1beta', useJsonMode: true },
+            { name: 'gemini-2.5-flash', version: 'v1', useJsonMode: false },
 
-            // Záložní 2.0 a 1.5
-            { name: 'gemini-2.0-flash', version: 'v1' },
-            { name: 'gemini-1.5-flash', version: 'v1' }
+            // Záložní stabilní modely
+            { name: 'gemini-2.0-flash', version: 'v1', useJsonMode: false },
+            { name: 'gemini-1.5-flash', version: 'v1', useJsonMode: false }
         ];
 
         let lastError: any = null;
 
         for (const modelCfg of modelsToTry) {
             try {
+                const config: any = {
+                    temperature: 0.8,
+                    maxOutputTokens: 2048,
+                };
+
+                if (modelCfg.useJsonMode) {
+                    // @ts-ignore - Vyžaduje validní JSON odpověď (funguje hlavně na v1beta)
+                    config.responseMimeType = "application/json";
+                }
+
                 const model = this.genAI!.getGenerativeModel(
-                    {
-                        model: modelCfg.name,
-                        generationConfig: {
-                            temperature: 0.8,
-                            maxOutputTokens: 1024,
-                            // @ts-ignore - Vynucení JSON formátu na straně Google API
-                            responseMimeType: "application/json",
-                        }
-                    },
+                    { model: modelCfg.name, generationConfig: config },
                     { apiVersion: modelCfg.version as any }
                 );
 
-                console.log(`DárekList: Zkouším model ${modelCfg.name} (${modelCfg.version}) v JSON módu...`);
+                console.log(`DárekList: Zkouším model ${modelCfg.name} (${modelCfg.version}, JSON logic: ${modelCfg.useJsonMode})...`);
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 const text = response.text();
 
                 if (!text) continue;
 
-                // V JSON módu už text neobsahuje markdown ```json ... ```
-                const data = JSON.parse(text);
+                const data = this.parseRobustJSON(text);
                 const tips = data.tips || data;
 
                 return tips.map((t: any) => ({ ...t, source: 'ai' }));
             } catch (error: any) {
                 lastError = error;
                 const status = error.message?.match(/\d{3}/)?.[0];
-                console.warn(`DárekList: Model ${modelCfg.name} (${modelCfg.version}) neuspěl [${status || 'Error'}]:`, error.message);
+                console.warn(`DárekList: Model ${modelCfg.name} neuspěl [${status || 'Error'}]:`, error.message);
 
                 if (status === '429') {
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1500));
                 }
             }
         }
