@@ -315,16 +315,17 @@ export class AIService {
 
         const modelsToTry = [
             { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
-            { name: 'gemini-1.5-flash', version: 'v1beta' },
             { name: 'gemini-1.5-flash', version: 'v1' },
+            { name: 'gemini-1.5-flash-latest', version: 'v1' },
             { name: 'gemini-1.5-pro', version: 'v1' },
-            { name: 'gemini-1.5-flash-8b', version: 'v1' }
+            { name: 'gemini-1.0-pro', version: 'v1' }
         ];
 
         let lastError: any = null;
 
         for (const modelCfg of modelsToTry) {
             try {
+                // Konfigurace modelu
                 const model = this.genAI!.getGenerativeModel(
                     {
                         model: modelCfg.name,
@@ -351,12 +352,16 @@ export class AIService {
                 return tips.map((t: any) => ({ ...t, source: 'ai' }));
             } catch (error: any) {
                 lastError = error;
-                // Pokud jde o chybu kvóty (429), zkusíme další model, ale často je kvóta na celý projekt
-                console.warn(`DárekList: Model ${modelCfg.name} neuspěl:`, error.message);
+                // Logování specifických chyb pro diagnostiku
+                const status = error.message?.match(/\d{3}/)?.[0];
+                console.warn(`DárekList: Model ${modelCfg.name} neuspěl [${status || 'Error'}]:`, error.message);
+
+                // Pokud jde o 404, zkusíme další, pokud o 429, zkusíme další (jiný model může mít jinou kvótu)
+                continue;
             }
         }
 
-        console.error('DárekList: Všechny AI modely vyčerpány nebo nedostupné (např. omezení kvóty). Používám Smart Fallback.', lastError);
+        console.error('DárekList: Všechny AI modely vyčerpány nebo nedostupné. Používám Smart Fallback.', lastError);
         return this.getFallbackTips(wishes);
     }
 }

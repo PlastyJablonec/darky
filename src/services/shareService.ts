@@ -122,44 +122,49 @@ export class ShareService {
 
   static async getSharedWithMe(userId: string) {
     try {
-      const { data, error } = await supabase
+      // 1. Získat záznamy o sdílení
+      const { data: shares, error: sharesError } = await supabase
         .from('wishlist_shares')
-        .select(`
-          *,
-          wishlist:wishlist_id (
-            id,
-            title,
-            description,
-            image_url,
-            occasion,
-            share_id,
-            created_at,
-            user_id
-          )
-        `)
+        .select('*')
         .eq('shared_with', userId)
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Chyba při získávání shared lists:', error)
+      if (sharesError) {
+        console.error('Chyba při získávání shared lists (shares):', sharesError)
         return []
       }
 
-      if (!data || data.length === 0) return []
+      if (!shares || shares.length === 0) return []
 
-      // Získat unikátní ID vlastníků seznamů
-      const ownerIds = [...new Set(data.map(share => (share.wishlist as any)?.user_id).filter(Boolean))]
+      // 2. Získat unikátní ID seznamů a jejich vlastníků
+      const wishlistIds = [...new Set(shares.map(s => s.wishlist_id))]
 
-      // Načíst profily vlastníků v samostatném dotazu
+      // 3. Načíst detaily těchto seznamů
+      const { data: wishlists, error: wishlistsError } = await supabase
+        .from('wishlists')
+        .select('*')
+        .in('id', wishlistIds)
+
+      if (wishlistsError) {
+        console.error('Chyba při získávání detailů seznamů:', wishlistsError)
+        return []
+      }
+
+      // 4. Získat unikátní ID vlastníků
+      const ownerIds = [...new Set(wishlists?.map(w => w.user_id) || [])]
+
+      // 5. Načíst profily vlastníků
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, display_name, email')
         .in('id', ownerIds)
 
-      // Transformovat data do očekávaného formátu pro komponentu
-      const transformedData = data.map(share => {
-        const wishlist = share.wishlist as any;
-        const ownerId = wishlist?.user_id;
+      // 6. Transformovat a spojit data
+      const transformedData = shares.map(share => {
+        const wishlist = wishlists?.find(w => w.id === share.wishlist_id);
+        if (!wishlist) return null;
+
+        const ownerId = wishlist.user_id;
         const profile = profiles?.find(p => p.id === ownerId);
 
         return {
@@ -171,16 +176,16 @@ export class ShareService {
               email: profile?.email || `user-${ownerId?.slice(0, 8)}`,
               display_name: profile?.display_name,
               raw_user_meta_data: {
-                display_name: profile?.display_name
+                display_name: profile?.display_name || profile?.email?.split('@')[0]
               }
             }
           }
         }
-      })
+      }).filter(Boolean);
 
       return transformedData
     } catch (err) {
-      console.error('Chyba při getSharedWithMe:', err)
+      console.error('Kritická chyba při getSharedWithMe:', err)
       return []
     }
   }
