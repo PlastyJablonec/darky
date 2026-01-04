@@ -314,10 +314,27 @@ export class AIService {
     `;
 
         const modelsToTry = [
+            // Nejvíc "cool" modely v beta verzi
             { name: 'gemini-2.0-flash-exp', version: 'v1beta' },
+            { name: 'gemini-2.0-flash-thinking-exp', version: 'v1beta' },
+
+            // Standardní 1.5 Flash (v1beta bývá nejstabilnější pro nové klíče)
+            { name: 'gemini-1.5-flash', version: 'v1beta' },
+            { name: 'gemini-1.5-flash-latest', version: 'v1beta' },
+
+            // Standardní 1.5 Flash (v1 verze)
             { name: 'gemini-1.5-flash', version: 'v1' },
             { name: 'gemini-1.5-flash-latest', version: 'v1' },
+
+            // Slabší ale rychlé modely
+            { name: 'gemini-1.5-flash-8b', version: 'v1beta' },
+            { name: 'gemini-1.5-flash-8b', version: 'v1' },
+
+            // Pro modely (často mají nižší kvóty pro free tier)
+            { name: 'gemini-1.5-pro', version: 'v1beta' },
             { name: 'gemini-1.5-pro', version: 'v1' },
+
+            // Starší modely jako poslední záchrana
             { name: 'gemini-1.0-pro', version: 'v1' }
         ];
 
@@ -325,7 +342,6 @@ export class AIService {
 
         for (const modelCfg of modelsToTry) {
             try {
-                // Konfigurace modelu
                 const model = this.genAI!.getGenerativeModel(
                     {
                         model: modelCfg.name,
@@ -337,7 +353,7 @@ export class AIService {
                     { apiVersion: modelCfg.version as any }
                 );
 
-                console.log(`DárekList: Zkouším AI model ${modelCfg.name} (${modelCfg.version})...`);
+                console.log(`DárekList: Zkouším model ${modelCfg.name} (${modelCfg.version})...`);
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
                 const text = response.text();
@@ -348,20 +364,20 @@ export class AIService {
                 const data = JSON.parse(jsonStr);
                 const tips = data.tips || data;
 
-                // Přidat příznak AI zdroje
                 return tips.map((t: any) => ({ ...t, source: 'ai' }));
             } catch (error: any) {
                 lastError = error;
-                // Logování specifických chyb pro diagnostiku
                 const status = error.message?.match(/\d{3}/)?.[0];
-                console.warn(`DárekList: Model ${modelCfg.name} neuspěl [${status || 'Error'}]:`, error.message);
+                console.warn(`DárekList: Model ${modelCfg.name} (${modelCfg.version}) neuspěl [${status || 'Error'}]:`, error.message);
 
-                // Pokud jde o 404, zkusíme další, pokud o 429, zkusíme další (jiný model může mít jinou kvótu)
-                continue;
+                // Pokud je to kvóta 429, počkáme malou chvíli před dalším pokusem (některé modely mají sdílenou kvótu)
+                if (status === '429') {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
             }
         }
 
-        console.error('DárekList: Všechny AI modely vyčerpány nebo nedostupné. Používám Smart Fallback.', lastError);
+        console.error('DárekList: Všechny AI modely vyčerpány. Používám Smart Fallback.', lastError);
         return this.getFallbackTips(wishes);
     }
 }
