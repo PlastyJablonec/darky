@@ -11,6 +11,7 @@ Už žádné nechtěné dárky nebo trapné situace, kdy dostanete to samé dvak
 - **Dva typy seznamů**:
     - **Osobní**: Klasický seznam pro vaše přání. Vy jako majitel **nevidíte**, kdo a co vám rezervoval. Překvapení zůstává zachováno! 🤫
     - **Spravovaný**: Ideální pro děti nebo hromadné akce. Jako majitel **vidíte** veškeré rezervace a máte dokonalý přehled o tom, co kdo kupuje.
+- **Inteligentní návrhy (AI v4.0)**: Pokud vám dochází inspirace, AI (Google Gemini) analyzuje stávající položky v seznamu a navrhne 3 další dárky, které by se mohly oslavenci líbit. Funguje i v offline režimu díky robustnímu fallback systému.y.
 - **Snadné přidávání dárků**: Vložte název, odkaz, cenu a obrázek. Dárky můžete řadit podle priority.
 
 ### 🤝 Sdílení a Rezervace

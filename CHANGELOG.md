@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0] - 2026-01-04
+### Added
+- **AI Gift Tips v4.0**: Significantly improved logic for gift recommendations.
+  - Added support for latest Gemini models (including Gemini 2.0 Flash).
+  - Enhanced Smart Fallback system with more diverse categories (Wellness, Home, Tech, Tools, Kitchen, Travel, Reading).
+  - Increased variability of tips when AI is unavailable or under heavy load.
+  - Better keyword detection for personalized suggestions based on existing wishlist items.
+
 ## [1.3.0] - 2025-12-10
 ### Added
 - **About Page**: New page explaining how the app works (`/about`).
