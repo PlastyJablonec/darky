@@ -1,28 +1,31 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from '@/context/AuthContext'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { useAuth } from '@/context/AuthContext'
+import { About } from '@/pages/About'
+import { AuthCallback } from '@/pages/AuthCallback'
 import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
+import { QuickAddGift } from '@/pages/QuickAddGift'
 import { Register } from '@/pages/Register'
-import { Wishlists } from '@/pages/Wishlists'
-import { WishlistDetail } from '@/pages/WishlistDetail'
-import { SharedWishlist } from '@/pages/SharedWishlist'
 import { SharedWithMe } from '@/pages/SharedWithMe'
-import { AuthCallback } from '@/pages/AuthCallback'
-import { About } from '@/pages/About'
+import { SharedWishlist } from '@/pages/SharedWishlist'
+import { WishlistDetail } from '@/pages/WishlistDetail'
+import { Wishlists } from '@/pages/Wishlists'
 import { runProductionDiagnostics } from '@/utils/debug'
 
 function App() {
   const { loading } = useAuth()
+  const isHostedEnvironment =
+    window.location.hostname !== 'localhost' &&
+    window.location.hostname !== '127.0.0.1'
 
-  // Spusť diagnostiku na produkci
   useEffect(() => {
-    if (window.location.hostname.includes('vercel.app')) {
-      console.log('🚀 Spouštím produkční diagnostiku...')
+    if (isHostedEnvironment) {
+      console.log('Starting hosted-environment diagnostics...')
       runProductionDiagnostics()
     }
-  }, [])
+  }, [isHostedEnvironment])
 
   if (loading) {
     return (
@@ -37,38 +40,41 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-
       <Route
         path="/wishlists"
-        element={
+        element={(
           <ProtectedRoute>
             <Wishlists />
           </ProtectedRoute>
-        }
+        )}
       />
-
       <Route
         path="/wishlists/:id"
-        element={
+        element={(
           <ProtectedRoute>
             <WishlistDetail />
           </ProtectedRoute>
-        }
+        )}
       />
-
+      <Route
+        path="/quick-add"
+        element={(
+          <ProtectedRoute>
+            <QuickAddGift />
+          </ProtectedRoute>
+        )}
+      />
       <Route
         path="/shared-with-me"
-        element={
+        element={(
           <ProtectedRoute>
             <SharedWithMe />
           </ProtectedRoute>
-        }
+        )}
       />
-
       <Route path="/shared/:shareId" element={<SharedWishlist />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/about" element={<About />} />
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

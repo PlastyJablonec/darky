@@ -19,7 +19,9 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Získat návratovou URL z query parametrů nebo z location state
-  const returnTo = searchParams.get('returnTo') || location.state?.from?.pathname || '/wishlists'
+  const returnTo = searchParams.get('returnTo')
+    || `${location.state?.from?.pathname || ''}${location.state?.from?.search || ''}`
+    || '/wishlists'
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
