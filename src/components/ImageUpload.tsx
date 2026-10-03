@@ -68,7 +68,7 @@ export function ImageUpload({
     }
   }
 
-  const displayImage = preview || currentImageUrl
+  const displayImage = currentImageUrl ?? preview
 
   return (
     <div className={`relative ${className}`}>

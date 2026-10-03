@@ -99,6 +99,7 @@ export function GiftModal({
   }
 
   const handleImageSelect = async (file: File) => {
+    setError('')
     const validation = validateImageFile(file)
     if (!validation.valid) {
       setError(validation.error || 'Neplatný obrázek')
@@ -121,6 +122,17 @@ export function GiftModal({
       ...prev,
       imageUrl: ''
     }))
+  }
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    const imageItem = Array.from(event.clipboardData.items).find(
+      item => item.kind === 'file' && item.type.startsWith('image/')
+    )
+    const file = imageItem?.getAsFile()
+    if (!file) return
+
+    event.preventDefault()
+    void handleImageSelect(file)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,7 +173,7 @@ export function GiftModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md sm:max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div onPaste={handlePaste} className="bg-white rounded-lg max-w-md sm:max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
           <button
@@ -273,6 +285,9 @@ export function GiftModal({
               currentImageUrl={formData.imageUrl}
               placeholder="Nahrajte obrázek dárku"
             />
+            <p tabIndex={0} className="mt-2 text-xs text-gray-600 focus:outline-primary-500">
+              Obrázek ze schránky vložíte pomocí Ctrl+V (na Macu ⌘+V) v tomto dialogu.
+            </p>
 
             <div className="mt-2">
               <label htmlFor="imageUrl" className="block text-xs text-gray-600 mb-1">
