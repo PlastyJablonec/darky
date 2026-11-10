@@ -1,12 +1,16 @@
-import { FormEvent, useEffect, useState } from 'react'
-import { Link, useBlocker } from 'react-router-dom'
+import { FormEvent, useEffect, useRef, useState } from 'react'
+import { Link, useBlocker, useSearchParams } from 'react-router-dom'
 import { getDateByName } from '@/utils/nameDays'
 import { Layout } from '@/components/Layout'
 import { supabase } from '@/config/supabase'
 import { useAuth } from '@/context/AuthContext'
+import { readGoogleBirthday, requestGoogleBirthday } from '@/services/googleBirthdayService'
 
 export function Settings() {
-  const { user } = useAuth()
+  const { user, session } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [importing, setImporting] = useState(false)
+  const importPromise = useRef<Promise<string | null> | null>(null)
   const [birthDate, setBirthDate] = useState('')
   const [nameDay, setNameDay] = useState('')
   const [savedDates, setSavedDates] = useState({ birthDate: '', nameDay: '' })
@@ -61,6 +65,39 @@ export function Settings() {
     return () => { active = false }
   }, [user])
 
+  useEffect(() => {
+    if (loading || !user || searchParams.get('googleBirthday') !== '1') return
+    let active = true
+    setImporting(true)
+    if (!importPromise.current) importPromise.current = readGoogleBirthday(user.id, session?.provider_token)
+    importPromise.current.then(date => {
+      if (!active) return
+      if (date) {
+        setBirthDate(date)
+        setMessage('Datum narození bylo načteno z Googlu. Zkontrolujte ho a uložte.')
+      } else {
+        setError('Google nevrátil úplné datum narození. Doplňte ho ve svém Google účtu nebo ho zadejte ručně zde.')
+      }
+    }).catch(importError => {
+      console.error('Google birthday import failed:', importError)
+      if (active) setError('Datum z Googlu se nepodařilo načíst. Zkontrolujte oprávnění nebo jej zadejte ručně. Pokud jste zvolili jiný účet, přihlaste se zpět ke svému účtu.')
+    }).finally(() => {
+      if (active) { setImporting(false); importPromise.current = null; setSearchParams({}, { replace: true }) }
+    })
+    return () => { active = false }
+  }, [loading, user, session, searchParams, setSearchParams])
+
+  const importBirthday = async () => {
+    if (!user) return
+    setError('')
+    try {
+      await requestGoogleBirthday(user.id, user.email)
+    } catch (importError) {
+      console.error('Failed to start Google birthday import:', importError)
+      setError('Propojení s Googlem se nepodařilo spustit. Datum můžete zadat ručně.')
+    }
+  }
+
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!user) return
@@ -99,7 +136,12 @@ export function Settings() {
     <p className="text-gray-600 mb-6">Narozeniny a svátek uvidí přihlášení uživatelé, se kterými sdílíte seznam. Údaje jsou nepovinné.</p>
     <form onSubmit={save} className="bg-white rounded-lg border p-6 space-y-5">
       <div><label htmlFor="birth-date" className="block font-medium mb-1">Datum narození</label>
-        <input id="birth-date" type="date" min="1900-01-01" max={maxDate} value={birthDate} onChange={e => setBirthDate(e.target.value)} className="border rounded-md p-2 w-full" /></div>
+        <input id="birth-date" type="date" min="1900-01-01" max={maxDate} value={birthDate} onChange={e => setBirthDate(e.target.value)} className="border rounded-md p-2 w-full" />
+        {!birthDate && !loading && <p className="text-sm text-amber-700 mt-2">Datum narození zatím nemáte vyplněné. Můžete ho načíst z Googlu nebo zadat ručně.</p>}
+        {user?.app_metadata?.providers?.includes('google') && <div className="mt-3">
+          <button type="button" onClick={importBirthday} disabled={loading || saving || importing || dirty || loadFailed} className="border border-primary-600 text-primary-700 rounded-md px-3 py-2 disabled:opacity-50">{importing ? 'Načítání…' : 'Načíst z Google účtu'}</button>
+          <p className="text-sm text-gray-500 mt-1">Google vás požádá o souhlas s přístupem k datu narození.{dirty ? ' Nejprve uložte změny ve formuláři.' : ''}</p>
+        </div>}</div>
       <div><span className="block font-medium mb-1">Datum svátku</span>
         <div className="flex gap-3">
           <div className="flex-1"><label htmlFor="name-day-day" className="sr-only">Den svátku</label>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Layout } from '@/components/Layout'
+import { BirthdayReminder } from '@/components/BirthdayReminder'
 import { WishlistCard } from '@/components/WishlistCard'
 import { WishlistModal } from '@/components/WishlistModal'
 import { useWishlists } from '@/hooks/useWishlists'
@@ -102,6 +103,7 @@ export function Wishlists() {
   return (
     <Layout>
       <div className="space-y-6">
+        <BirthdayReminder />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Moje seznamy přání</h1>
