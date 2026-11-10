@@ -82,6 +82,15 @@ export function Settings() {
     }
   }
 
+  const changeNameDay = (part: 'day' | 'month', value: string) => {
+    if (!value) { setNameDay(''); return }
+    const month = part === 'month' ? Number(value) : Number(nameDay.slice(0, 2) || 1)
+    const selectedDay = part === 'day' ? Number(value) : Number(nameDay.slice(3) || 1)
+    const day = Math.min(selectedDay, new Date(2000, month, 0).getDate())
+    setNameDay(`${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`)
+  }
+  const monthNames = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec']
+  const daysInMonth = new Date(2000, Number(nameDay.slice(0, 2)) || 1, 0).getDate()
   const today = new Date()
   const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
   return <Layout><div className="max-w-xl mx-auto w-full">
@@ -91,9 +100,18 @@ export function Settings() {
     <form onSubmit={save} className="bg-white rounded-lg border p-6 space-y-5">
       <div><label htmlFor="birth-date" className="block font-medium mb-1">Datum narození</label>
         <input id="birth-date" type="date" min="1900-01-01" max={maxDate} value={birthDate} onChange={e => setBirthDate(e.target.value)} className="border rounded-md p-2 w-full" /></div>
-      <div><label htmlFor="name-day" className="block font-medium mb-1">Datum svátku</label>
-        <input id="name-day" type="date" min="2000-01-01" max="2000-12-31" value={nameDay ? `2000-${nameDay}` : ''} onChange={e => setNameDay(e.target.value.slice(5))} className="border rounded-md p-2 w-full" />
-        <p className="text-sm text-gray-500 mt-1">Vyberte den a měsíc; rok 2000 slouží pouze pro zadání data.</p>
+      <div><span className="block font-medium mb-1">Datum svátku</span>
+        <div className="flex gap-3">
+          <div className="flex-1"><label htmlFor="name-day-day" className="sr-only">Den svátku</label>
+            <select id="name-day-day" value={nameDay ? String(Number(nameDay.slice(3))) : ''} onChange={e => changeNameDay('day', e.target.value)} className="border rounded-md p-2 w-full bg-white">
+              <option value="">Den</option>{Array.from({ length: daysInMonth }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}.</option>)}
+            </select></div>
+          <div className="flex-1"><label htmlFor="name-day-month" className="sr-only">Měsíc svátku</label>
+            <select id="name-day-month" value={nameDay ? String(Number(nameDay.slice(0, 2))) : ''} onChange={e => changeNameDay('month', e.target.value)} className="border rounded-md p-2 w-full bg-white">
+              <option value="">Měsíc</option>{monthNames.map((month, i) => <option key={month} value={i + 1}>{month}</option>)}
+            </select></div>
+        </div>
+        {nameDay && <button type="button" onClick={() => setNameDay('')} className="text-sm text-primary-600 underline mt-2">Vymazat datum svátku</button>}
         {suggestions.length > 0 && <div className="mt-2 text-sm text-gray-600">
           <p>Podle jména {firstName} můžete zvolit (zkontrolujte před uložením):</p>
           {suggestions.map(date => <button key={date} type="button" onClick={() => setNameDay(date)} className="text-primary-600 underline mr-3">{Number(date.slice(3))}. {Number(date.slice(0, 2))}.</button>)}
