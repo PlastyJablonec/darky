@@ -1,0 +1,3 @@
+# Managed wishlist people
+
+Apply `managed-wishlist-people-migration.sql` before deploying. Managed-person fields are stored separately from public wishlist rows. The owner and authenticated users with a wishlist share can read them; only the owner can create or update them. Anonymous visitors cannot read these fields. The application creates a share record when an authenticated user opens a public wishlist, so such visitors can also see the details. Birth year is not shown in the interface but is accessible to authorized readers through the API. Deleting a wishlist deletes its managed-person record. An owner can add or edit optional name, birthday and name day via the wishlist editor. Suggestions use the Czech name-day calendar. Existing lists require no data migration.

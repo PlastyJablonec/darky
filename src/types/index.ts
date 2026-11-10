@@ -17,6 +17,13 @@ export interface GiftWithReserver extends Gift {
   }
 }
 
+export interface ManagedPerson {
+  wishlist_id: string;
+  person_name: string | null;
+  birth_date: string | null;
+  name_day: string | null;
+}
+
 export interface Wishlist {
   id: string;
   user_id: string;
@@ -27,6 +34,7 @@ export interface Wishlist {
   is_public: boolean;
   share_id?: string | null;
   type: 'personal' | 'managed';
+  managed_person?: ManagedPerson | null;
   created_at: string;
   updated_at: string;
 }
@@ -262,6 +270,11 @@ export interface Database {
           message?: string;
           created_at?: string;
         };
+      };
+      managed_wishlist_people: {
+        Row: ManagedPerson;
+        Insert: { wishlist_id: string; person_name?: string | null; birth_date?: string | null; name_day?: string | null };
+        Update: { wishlist_id?: string; person_name?: string | null; birth_date?: string | null; name_day?: string | null };
       };
       profile_dates: {
         Row: { user_id: string; birth_date: string | null; name_day: string | null };

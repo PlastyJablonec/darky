@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Gift, Heart } from 'lucide-react'
+import { ManagedPersonSummary } from '@/components/ManagedPersonSummary'
+import { managedPersonService } from '@/services/managedPersonService'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { ShareButtons } from '@/components/ShareButtons'
 import { OptimizedImage } from '@/components/OptimizedImage'
@@ -55,6 +57,14 @@ export function SharedWishlist() {
             return
           }
           await ShareService.updateShareView(wishlistData.id, user.id)
+          if (wishlistData.type === 'managed') {
+            try {
+              const people = await managedPersonService.getMany([wishlistData.id])
+              setWishlist({ ...wishlistData, managed_person: people[0] || null })
+            } catch (personError) {
+              console.error('Nepodařilo se načíst údaje spravované osoby:', personError)
+            }
+          }
         }
 
       } catch (err) {
@@ -180,6 +190,7 @@ export function SharedWishlist() {
                 {wishlist.description && (
                   <p className="text-gray-600 mt-1">{wishlist.description}</p>
                 )}
+                {wishlist.type === 'managed' && <ManagedPersonSummary person={wishlist.managed_person} />}
               </div>
             </div>
 

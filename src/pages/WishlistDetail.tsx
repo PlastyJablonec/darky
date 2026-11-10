@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X, Shield, ArrowUpDown, Filter } from 'lucide-react'
+import { ManagedPersonSummary } from '@/components/ManagedPersonSummary'
 import { Layout } from '@/components/Layout'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { GiftModal } from '@/components/GiftModal'
@@ -301,6 +302,7 @@ export function WishlistDetail() {
               {wishlist.description && (
                 <p className="text-gray-600 mt-1 break-words">{wishlist.description}</p>
               )}
+              {wishlist.type === 'managed' && <ManagedPersonSummary person={wishlist.managed_person} />}
               <div className="flex flex-wrap gap-2 mt-2">
                 {wishlist.is_public && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MoreHorizontal, Share2, Edit, Trash2, Eye } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
 import { OptimizedImage } from './OptimizedImage'
+import { ManagedPersonSummary } from './ManagedPersonSummary'
 import { ShareButtons } from './ShareButtons'
 import type { Database } from '@/types'
 
@@ -39,6 +40,7 @@ export function WishlistCard({ wishlist, onEdit, onDelete, onTogglePublic }: Wis
                 </Link>
               )}
               
+              {wishlist.type === 'managed' && <ManagedPersonSummary person={wishlist.managed_person} />}
               <div className="flex items-center space-x-2">
                 {wishlist.is_public && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">

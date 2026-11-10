@@ -60,7 +60,7 @@ export function useWishlists() {
             setWishlists(prev => [payload.new as Wishlist, ...prev])
           } else if (payload.eventType === 'UPDATE') {
             setWishlists(prev => prev.map(w =>
-              w.id === payload.new.id ? payload.new as Wishlist : w
+              w.id === payload.new.id ? { ...(payload.new as Wishlist), managed_person: w.managed_person } : w
             ))
           } else if (payload.eventType === 'DELETE') {
             setWishlists(prev => prev.filter(w => w.id !== payload.old.id))
@@ -95,7 +95,7 @@ export function useWishlists() {
     })
 
     // Okamžitě přidat do lokálního stavu
-    setWishlists(prev => [newWishlist, ...prev])
+    setWishlists(prev => [newWishlist, ...prev.filter(w => w.id !== newWishlist.id)])
 
     return newWishlist
   }
@@ -105,12 +105,14 @@ export function useWishlists() {
     description?: string
     imageUrl?: string
     isPublic?: boolean
+    type?: 'personal' | 'managed'
   }) => {
     const updatedWishlist = await wishlistService.updateWishlist(id, {
       title: updates.title,
       description: updates.description || null,
       image_url: updates.imageUrl || null,
       is_public: updates.isPublic,
+      type: updates.type,
     })
 
     // Okamžitě aktualizovat lokální stav
@@ -149,7 +151,7 @@ export function useWishlists() {
     togglePublic,
     refresh: () => {
       if (user) {
-        wishlistService.getUserWishlists(user.id).then(setWishlists)
+        wishlistService.getUserWishlists(user.id).then(setWishlists).catch(err => { console.error('Error refreshing wishlists:', err); setError('Seznamy se nepodařilo aktualizovat.') })
       }
     },
   }

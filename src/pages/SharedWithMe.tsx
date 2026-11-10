@@ -4,6 +4,8 @@ import { Eye, Heart, User, Clock, Share2, ArrowLeft } from 'lucide-react'
 import { OptimizedImage } from '@/components/OptimizedImage'
 import { useAuth } from '@/context/AuthContext'
 import { ShareService } from '@/services/shareService'
+import type { ManagedPerson } from '@/types'
+import { ManagedPersonSummary } from '@/components/ManagedPersonSummary'
 import { Layout } from '@/components/Layout'
 import { upcomingDate } from '@/utils/anniversary'
 
@@ -23,6 +25,7 @@ interface SharedWishlist {
     occasion: string | null
     share_id: string | null
     created_at: string
+    managed_person: ManagedPerson | null
     profile_dates: { birth_date: string | null; name_day: string | null } | null
     users: {
       id: string
@@ -201,6 +204,7 @@ export function SharedWithMe() {
                   </div>
                   
 
+                  <ManagedPersonSummary person={shared.wishlists.managed_person} />
                   {shared.wishlists.profile_dates?.birth_date && (() => {
                     const anniversary = upcomingDate(shared.wishlists.profile_dates.birth_date)
                     return <div className="text-sm text-gray-600">🎂 Narozeniny {anniversary.date} – {anniversary.countdown}</div>

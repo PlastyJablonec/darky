@@ -1,3 +1,4 @@
+import { managedPersonService } from '@/services/managedPersonService'
 import { supabase } from '@/config/supabase'
 import { debugError } from '@/utils/debug'
 import type { Database } from '@/types'
@@ -18,7 +19,9 @@ export const wishlistService = {
       debugError('Chyba při načítání seznamů přání', error)
       throw error
     }
-    return data || []
+    const rows = data || []
+    const people = await managedPersonService.getMany(rows.filter(w => w.type === 'managed').map(w => w.id))
+    return rows.map(w => ({ ...w, managed_person: people.find(p => p.wishlist_id === w.id) || null }))
   },
 
   async getWishlist(id: string): Promise<Wishlist | null> {
@@ -31,6 +34,10 @@ export const wishlistService = {
     if (error) {
       if (error.code === 'PGRST116') return null
       throw error
+    }
+    if (data?.type === 'managed') {
+      const people = await managedPersonService.getMany([data.id])
+      return { ...data, managed_person: people[0] || null }
     }
     return data
   },

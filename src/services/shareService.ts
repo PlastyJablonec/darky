@@ -1,3 +1,4 @@
+import { managedPersonService } from '@/services/managedPersonService'
 import { supabase } from '@/config/supabase'
 
 export class ShareService {
@@ -165,6 +166,8 @@ export class ShareService {
         .in('user_id', ownerIds)
       if (datesError) console.error('Chyba při načítání důležitých dat:', datesError)
 
+      const managedPeople = await managedPersonService.getMany((wishlists || []).filter(w => w.type === 'managed').map(w => w.id)).catch(error => { console.error('Chyba při načítání spravovaných osob:', error); return [] })
+
       // 6. Transformovat a spojit data
       const transformedData = shares.map(share => {
         const wishlist = wishlists?.find(w => w.id === share.wishlist_id);
@@ -177,7 +180,8 @@ export class ShareService {
           ...share,
           wishlists: {
             ...wishlist,
-            profile_dates: profileDates?.find(d => d.user_id === ownerId) || null,
+            profile_dates: wishlist.type === 'managed' ? null : profileDates?.find(d => d.user_id === ownerId) || null,
+            managed_person: managedPeople.find(p => p.wishlist_id === wishlist.id) || null,
             users: {
               id: ownerId,
               email: profile?.email || `user-${ownerId?.slice(0, 8)}`,

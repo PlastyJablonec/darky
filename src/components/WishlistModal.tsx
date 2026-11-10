@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { ManagedPersonForm, type ManagedPersonFields } from './ManagedPersonForm'
+import { managedPersonService } from '@/services/managedPersonService'
 import { ImageUpload } from './ImageUpload'
 import { resizeImage, validateImageFile } from '@/utils/imageUtils'
 import type { Database } from '@/types'
@@ -15,7 +17,8 @@ interface WishlistModalProps {
     imageUrl?: string
     isPublic?: boolean
     type?: 'personal' | 'managed'
-  }) => Promise<void>
+  }, createdId?: string) => Promise<Wishlist>
+  onSaved: () => void
   title: string
   initialData?: Wishlist
 }
@@ -25,6 +28,7 @@ export function WishlistModal({
   isOpen,
   onClose,
   onSubmit,
+  onSaved,
   title,
   initialData,
 }: WishlistModalProps) {
@@ -35,6 +39,8 @@ export function WishlistModal({
     isPublic: false,
     type: 'personal' as 'personal' | 'managed',
   })
+  const [person, setPerson] = useState<ManagedPersonFields>({ personName: '', birthDate: '', nameDay: '' })
+  const [createdList, setCreatedList] = useState<Wishlist | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -56,6 +62,8 @@ export function WishlistModal({
         type: 'personal',
       })
     }
+    setPerson({ personName: initialData?.managed_person?.person_name || '', birthDate: initialData?.managed_person?.birth_date || '', nameDay: initialData?.managed_person?.name_day?.slice(5) || '' })
+    setCreatedList(null)
     setError('')
   }, [initialData, isOpen])
 
@@ -111,15 +119,21 @@ export function WishlistModal({
     setError('')
 
     try {
-      await onSubmit({
+      const list = await onSubmit({
         title: formData.title.trim(),
         description: formData.description.trim() || undefined,
         imageUrl: formData.imageUrl.trim() || undefined,
         isPublic: formData.isPublic,
         type: formData.type,
-      })
+      }, createdList?.id)
+      if (!initialData) setCreatedList(list)
+      if (formData.type === 'managed') {
+        await managedPersonService.save({ wishlist_id: list.id, person_name: person.personName.trim() || null, birth_date: person.birthDate || null, name_day: person.nameDay ? `2000-${person.nameDay}` : null })
+      }
+      onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Chyba při ukládání')
+      console.error('Failed to save wishlist or managed person:', err)
+      setError('Údaje se nepodařilo uložit. Zkuste to znovu; pokud se seznam již vytvořil, nevytvoří se znovu.')
     } finally {
       setIsLoading(false)
     }
@@ -250,6 +264,8 @@ export function WishlistModal({
               </div>
             </div>
           </div>
+
+          {formData.type === 'managed' && <ManagedPersonForm value={person} onChange={setPerson} />}
 
           <div className="flex items-center">
             <input

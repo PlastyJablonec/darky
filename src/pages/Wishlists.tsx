@@ -18,6 +18,7 @@ export function Wishlists() {
     updateWishlist,
     deleteWishlist,
     togglePublic,
+    refresh,
   } = useWishlists()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -30,13 +31,8 @@ export function Wishlists() {
     imageUrl?: string
     isPublic?: boolean
     type?: 'personal' | 'managed'
-  }) => {
-    try {
-      await createWishlist(data)
-      setIsModalOpen(false)
-    } catch (error) {
-      console.error('Error creating wishlist:', error)
-    }
+  }, createdId?: string) => {
+    return createdId ? updateWishlist(createdId, data) : createWishlist(data)
   }
 
   const handleUpdateWishlist = async (data: {
@@ -44,15 +40,10 @@ export function Wishlists() {
     description?: string
     imageUrl?: string
     isPublic?: boolean
+    type?: 'personal' | 'managed'
   }) => {
-    if (!editingWishlist) return
-
-    try {
-      await updateWishlist(editingWishlist.id, data)
-      setEditingWishlist(null)
-    } catch (error) {
-      console.error('Error updating wishlist:', error)
-    }
+    if (!editingWishlist) throw new Error('Seznam nenalezen')
+    return updateWishlist(editingWishlist.id, data)
   }
 
   const handleDeleteWishlist = async () => {
@@ -158,6 +149,7 @@ export function Wishlists() {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleCreateWishlist}
+          onSaved={() => { setIsModalOpen(false); refresh() }}
           title="Vytvořit nový seznam"
         />
 
@@ -165,6 +157,7 @@ export function Wishlists() {
           isOpen={!!editingWishlist}
           onClose={() => setEditingWishlist(null)}
           onSubmit={handleUpdateWishlist}
+          onSaved={() => { setEditingWishlist(null); refresh() }}
           title="Upravit seznam"
           initialData={editingWishlist || undefined}
         />
