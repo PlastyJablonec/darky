@@ -159,6 +159,12 @@ export class ShareService {
         .select('id, display_name, email')
         .in('id', ownerIds)
 
+      const { data: profileDates, error: datesError } = await supabase
+        .from('profile_dates')
+        .select('user_id, birth_date, name_day')
+        .in('user_id', ownerIds)
+      if (datesError) console.error('Chyba při načítání důležitých dat:', datesError)
+
       // 6. Transformovat a spojit data
       const transformedData = shares.map(share => {
         const wishlist = wishlists?.find(w => w.id === share.wishlist_id);
@@ -171,6 +177,7 @@ export class ShareService {
           ...share,
           wishlists: {
             ...wishlist,
+            profile_dates: profileDates?.find(d => d.user_id === ownerId) || null,
             users: {
               id: ownerId,
               email: profile?.email || `user-${ownerId?.slice(0, 8)}`,

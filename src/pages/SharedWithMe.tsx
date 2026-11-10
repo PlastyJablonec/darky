@@ -4,6 +4,8 @@ import { Eye, Heart, User, Clock, Share2, ArrowLeft } from 'lucide-react'
 import { OptimizedImage } from '@/components/OptimizedImage'
 import { useAuth } from '@/context/AuthContext'
 import { ShareService } from '@/services/shareService'
+import { Layout } from '@/components/Layout'
+import { upcomingDate } from '@/utils/anniversary'
 
 interface SharedWishlist {
   id: string
@@ -21,6 +23,7 @@ interface SharedWishlist {
     occasion: string | null
     share_id: string | null
     created_at: string
+    profile_dates: { birth_date: string | null; name_day: string | null } | null
     users: {
       id: string
       email: string
@@ -86,7 +89,7 @@ export function SharedWithMe() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <Layout><div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-3">
@@ -108,13 +111,13 @@ export function SharedWithMe() {
             ))}
           </div>
         </div>
-      </div>
+      </div></Layout>
     )
   }
 
   if (sharedLists.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <Layout><div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-3">
@@ -141,12 +144,12 @@ export function SharedWithMe() {
             </Link>
           </div>
         </div>
-      </div>
+      </div></Layout>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <Layout><div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-3">
@@ -198,6 +201,14 @@ export function SharedWithMe() {
                   </div>
                   
 
+                  {shared.wishlists.profile_dates?.birth_date && (() => {
+                    const anniversary = upcomingDate(shared.wishlists.profile_dates.birth_date)
+                    return <div className="text-sm text-gray-600">🎂 Narozeniny {anniversary.date} – {anniversary.countdown}</div>
+                  })()}
+                  {shared.wishlists.profile_dates?.name_day && (() => {
+                    const anniversary = upcomingDate(shared.wishlists.profile_dates.name_day)
+                    return <div className="text-sm text-gray-600">🌷 Svátek {anniversary.date} – {anniversary.countdown}</div>
+                  })()}
                   <div className="flex items-center text-sm text-gray-500">
                     <Clock className="h-4 w-4 mr-2" />
                     <span>
@@ -245,6 +256,6 @@ export function SharedWithMe() {
           </p>
         </div>
       </div>
-    </div>
+    </div></Layout>
   )
 }

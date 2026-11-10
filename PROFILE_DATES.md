@@ -1,0 +1,3 @@
+# Profile dates
+
+Apply `profile-dates-migration.sql` to the Supabase database before deploying the profile settings feature. Each signed-in user can optionally enter a birth date and name day in Settings; clearing a field removes that date. Dates are stored separately from public profiles and are readable by the owner and authenticated users with a recorded wishlist share from that owner. The shared-list overview displays the next anniversary without exposing the birth year in the interface. The recipient can access the stored date through the database API. A February 29 anniversary is observed on February 28 in non-leap years.

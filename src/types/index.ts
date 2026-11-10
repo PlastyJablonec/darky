@@ -263,6 +263,11 @@ export interface Database {
           created_at?: string;
         };
       };
+      profile_dates: {
+        Row: { user_id: string; birth_date: string | null; name_day: string | null };
+        Insert: { user_id: string; birth_date?: string | null; name_day?: string | null };
+        Update: { user_id?: string; birth_date?: string | null; name_day?: string | null };
+      };
       profiles: {
         Row: {
           id: string;

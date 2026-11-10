@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Gift, Home, Link2, LogOut, Share2, User } from 'lucide-react'
+import { Gift, Home, Link2, LogOut, Settings, Share2, User } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { Footer } from './Footer'
 
@@ -85,6 +85,7 @@ export function Layout({ children }: LayoutProps) {
                 <span className="hidden sm:inline">Sdileno se mnou</span>
               </Link>
 
+              <Link to="/settings" title="Nastavení profilu" aria-label="Nastavení profilu" className="p-2 rounded-md text-gray-500 hover:bg-gray-100"><Settings className="h-5 w-5" /></Link>
               <div className="flex items-center space-x-2 sm:space-x-3 ml-2">
                 <div className="flex items-center space-x-2">
                   {user.user_metadata?.avatar_url ? (

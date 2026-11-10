@@ -8,6 +8,7 @@ import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
 import { QuickAddGift } from '@/pages/QuickAddGift'
 import { Register } from '@/pages/Register'
+import { Settings } from '@/pages/Settings'
 import { SharedWithMe } from '@/pages/SharedWithMe'
 import { SharedWishlist } from '@/pages/SharedWishlist'
 import { WishlistDetail } from '@/pages/WishlistDetail'
@@ -72,6 +73,7 @@ function App() {
           </ProtectedRoute>
         )}
       />
+      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/shared/:shareId" element={<SharedWishlist />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/about" element={<About />} />
