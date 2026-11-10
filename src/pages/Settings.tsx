@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useBlocker } from 'react-router-dom'
+import { getDateByName } from '@/utils/nameDays'
 import { Layout } from '@/components/Layout'
 import { supabase } from '@/config/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -8,11 +9,33 @@ export function Settings() {
   const { user } = useAuth()
   const [birthDate, setBirthDate] = useState('')
   const [nameDay, setNameDay] = useState('')
+  const [savedDates, setSavedDates] = useState({ birthDate: '', nameDay: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [loadFailed, setLoadFailed] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const firstName = String(user?.user_metadata?.given_name || user?.user_metadata?.full_name || user?.user_metadata?.display_name || '').trim().split(/\s+/)[0]
+  const suggestions = firstName ? getDateByName(firstName) : []
+  const dirty = !loading && (birthDate !== savedDates.birthDate || nameDay !== savedDates.nameDay)
+  const blocker = useBlocker(dirty || saving)
+
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return
+    if (!saving && window.confirm('Máte neuložené změny. Opravdu chcete odejít bez uložení?')) blocker.proceed()
+    else blocker.reset()
+  }, [blocker, saving])
+
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (!dirty && !saving) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty, saving])
 
   useEffect(() => {
     if (!user) return
@@ -25,8 +48,13 @@ export function Settings() {
           setLoadFailed(true)
           setError('Údaje se nepodařilo načíst. Zkuste to prosím později.')
         } else {
-          setBirthDate(data?.birth_date || '')
-          setNameDay(data?.name_day?.slice(5) || '')
+          const savedBirthDate = data?.birth_date || ''
+          const savedNameDay = data?.name_day?.slice(5) || ''
+          setSavedDates({ birthDate: savedBirthDate, nameDay: savedNameDay })
+          setBirthDate(savedBirthDate)
+          const profileName = String(user.user_metadata?.given_name || user.user_metadata?.full_name || user.user_metadata?.display_name || '').trim().split(/\s+/)[0]
+          const matches = profileName ? getDateByName(profileName) : []
+          setNameDay(savedNameDay || (matches.length === 1 ? matches[0] : ''))
         }
         setLoading(false)
       })
@@ -44,6 +72,7 @@ export function Settings() {
         user_id: user.id, birth_date: birthDate || null, name_day: nameDay ? `2000-${nameDay}` : null,
       })
       if (saveError) throw saveError
+      setSavedDates({ birthDate, nameDay })
       setMessage('Údaje byly uloženy.')
     } catch (saveError) {
       console.error('Failed to save profile dates:', saveError)
@@ -64,7 +93,11 @@ export function Settings() {
         <input id="birth-date" type="date" min="1900-01-01" max={maxDate} value={birthDate} onChange={e => setBirthDate(e.target.value)} className="border rounded-md p-2 w-full" /></div>
       <div><label htmlFor="name-day" className="block font-medium mb-1">Datum svátku</label>
         <input id="name-day" type="date" min="2000-01-01" max="2000-12-31" value={nameDay ? `2000-${nameDay}` : ''} onChange={e => setNameDay(e.target.value.slice(5))} className="border rounded-md p-2 w-full" />
-        <p className="text-sm text-gray-500 mt-1">Vyberte den a měsíc; rok 2000 slouží pouze pro zadání data.</p></div>
+        <p className="text-sm text-gray-500 mt-1">Vyberte den a měsíc; rok 2000 slouží pouze pro zadání data.</p>
+        {suggestions.length > 0 && <div className="mt-2 text-sm text-gray-600">
+          <p>Podle jména {firstName} můžete zvolit (zkontrolujte před uložením):</p>
+          {suggestions.map(date => <button key={date} type="button" onClick={() => setNameDay(date)} className="text-primary-600 underline mr-3">{Number(date.slice(3))}. {Number(date.slice(0, 2))}.</button>)}
+        </div>}</div>
       {error && <p role="alert" className="text-red-700">{error}</p>}
       {message && <p role="status" className="text-green-700">{message}</p>}
       <button className="btn-primary" disabled={loading || saving || loadFailed}>{saving ? 'Ukládání…' : 'Uložit'}</button>
