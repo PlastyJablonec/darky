@@ -1,4 +1,5 @@
 import { supabase } from '@/config/supabase'
+import { selectGoogleBirthday, type GoogleBirthday } from '@/utils/googleBirthday'
 
 const pendingKey = 'dareklist.googleBirthdayUser'
 export const googleBirthdayScope = 'openid email profile https://www.googleapis.com/auth/user.birthday.read'
@@ -17,11 +18,6 @@ export async function requestGoogleBirthday(userId: string, email?: string): Pro
   if (error) { sessionStorage.removeItem(pendingKey); throw error }
 }
 
-interface GoogleBirthday {
-  date?: { year?: number; month?: number; day?: number }
-  metadata?: { primary?: boolean; source?: { type?: string } }
-}
-
 export async function readGoogleBirthday(userId: string, token: string | null | undefined): Promise<string | null> {
   const expectedUser = sessionStorage.getItem(pendingKey)
   sessionStorage.removeItem(pendingKey)
@@ -31,19 +27,12 @@ export async function readGoogleBirthday(userId: string, token: string | null | 
 
 export async function fetchGoogleBirthday(token: string | null | undefined): Promise<string | null> {
   if (!token) throw new Error('google-token-unavailable')
-  const response = await fetch('https://people.googleapis.com/v1/people/me?personFields=birthdays&sources=READ_SOURCE_TYPE_PROFILE', {
+  const response = await fetch('https://people.googleapis.com/v1/people/me?personFields=birthdays', {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!response.ok) throw new Error(`google-people-http-${response.status}`)
   const result: { birthdays?: GoogleBirthday[] } = await response.json()
-  const entries = result.birthdays || []
-  const primary = entries.find(item => item.metadata?.primary) || (entries.length === 1 ? entries[0] : undefined)
-  const value = primary?.date
-  if (!value?.year || !value.month || !value.day) return null
-  const { year, month, day } = value
-  const date = new Date(Date.UTC(year, month - 1, day))
-  if (year < 1900 || year > new Date().getFullYear() || date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day || date.getTime() > Date.now()) return null
-  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  return selectGoogleBirthday(result.birthdays || [])
 }
 
 export async function saveMissingGoogleBirthday(userId: string, token: string | null | undefined): Promise<void> {
