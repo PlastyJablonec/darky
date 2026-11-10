@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/config/supabase'
+import { googleBirthdayScope, googleLoginPendingKey, saveMissingGoogleBirthday } from '@/services/googleBirthdayService'
 
 interface AuthContextType {
   user: User | null
@@ -82,6 +83,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!session?.user || window.location.pathname === '/auth/callback' || sessionStorage.getItem(googleLoginPendingKey) !== '1') return
+    sessionStorage.removeItem(googleLoginPendingKey)
+    saveMissingGoogleBirthday(session.user.id, session.provider_token).catch(error => {
+      console.error('Failed to import birthday after Google sign-in:', error)
+      window.dispatchEvent(new Event('profile-dates-changed'))
+    })
+  }, [session])
+
   const signUp = async (email: string, password: string, displayName?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -115,14 +125,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Použít aktuální origin pro redirect
     const redirectOrigin = window.location.origin
 
+    sessionStorage.setItem(googleLoginPendingKey, '1')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${redirectOrigin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`,
+        scopes: googleBirthdayScope,
       },
     })
 
-    if (error) throw error
+    if (error) { sessionStorage.removeItem(googleLoginPendingKey); throw error }
   }
 
   const signOut = async () => {

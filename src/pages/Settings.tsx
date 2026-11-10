@@ -11,6 +11,7 @@ export function Settings() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [importing, setImporting] = useState(false)
   const importPromise = useRef<Promise<string | null> | null>(null)
+  const redirectingToGoogle = useRef(false)
   const [birthDate, setBirthDate] = useState('')
   const [nameDay, setNameDay] = useState('')
   const [savedDates, setSavedDates] = useState({ birthDate: '', nameDay: '' })
@@ -23,7 +24,7 @@ export function Settings() {
   const firstName = String(user?.user_metadata?.given_name || user?.user_metadata?.full_name || user?.user_metadata?.display_name || '').trim().split(/\s+/)[0]
   const suggestions = firstName ? getDateByName(firstName) : []
   const dirty = !loading && (birthDate !== savedDates.birthDate || nameDay !== savedDates.nameDay)
-  const blocker = useBlocker(dirty || saving)
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => (dirty || saving) && currentLocation.pathname !== nextLocation.pathname)
 
   useEffect(() => {
     if (blocker.state !== 'blocked') return
@@ -33,7 +34,7 @@ export function Settings() {
 
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
-      if (!dirty && !saving) return
+      if (redirectingToGoogle.current || (!dirty && !saving)) return
       event.preventDefault()
       event.returnValue = ''
     }
@@ -55,10 +56,14 @@ export function Settings() {
           const savedBirthDate = data?.birth_date || ''
           const savedNameDay = data?.name_day?.slice(5) || ''
           setSavedDates({ birthDate: savedBirthDate, nameDay: savedNameDay })
-          setBirthDate(savedBirthDate)
+          let draft: { birthDate: string; nameDay: string } | null = null
+          const draftKey = `dareklist.profileDraft.${user.id}`
+          try { draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null') } catch { console.error('Invalid profile draft') }
+          sessionStorage.removeItem(draftKey)
+          setBirthDate(typeof draft?.birthDate === 'string' ? draft.birthDate : savedBirthDate)
           const profileName = String(user.user_metadata?.given_name || user.user_metadata?.full_name || user.user_metadata?.display_name || '').trim().split(/\s+/)[0]
           const matches = profileName ? getDateByName(profileName) : []
-          setNameDay(savedNameDay || (matches.length === 1 ? matches[0] : ''))
+          setNameDay(typeof draft?.nameDay === 'string' ? draft.nameDay : savedNameDay || (matches.length === 1 ? matches[0] : ''))
         }
         setLoading(false)
       })
@@ -91,8 +96,12 @@ export function Settings() {
     if (!user) return
     setError('')
     try {
+      sessionStorage.setItem(`dareklist.profileDraft.${user.id}`, JSON.stringify({ birthDate, nameDay }))
+      redirectingToGoogle.current = true
       await requestGoogleBirthday(user.id, user.email)
     } catch (importError) {
+      redirectingToGoogle.current = false
+      sessionStorage.removeItem(`dareklist.profileDraft.${user.id}`)
       console.error('Failed to start Google birthday import:', importError)
       setError('Propojení s Googlem se nepodařilo spustit. Datum můžete zadat ručně.')
     }
@@ -139,8 +148,8 @@ export function Settings() {
         <input id="birth-date" type="date" min="1900-01-01" max={maxDate} value={birthDate} onChange={e => setBirthDate(e.target.value)} className="border rounded-md p-2 w-full" />
         {!birthDate && !loading && <p className="text-sm text-amber-700 mt-2">Datum narození zatím nemáte vyplněné. Můžete ho načíst z Googlu nebo zadat ručně.</p>}
         {user?.app_metadata?.providers?.includes('google') && <div className="mt-3">
-          <button type="button" onClick={importBirthday} disabled={loading || saving || importing || dirty || loadFailed} className="border border-primary-600 text-primary-700 rounded-md px-3 py-2 disabled:opacity-50">{importing ? 'Načítání…' : 'Načíst z Google účtu'}</button>
-          <p className="text-sm text-gray-500 mt-1">Google vás požádá o souhlas s přístupem k datu narození.{dirty ? ' Nejprve uložte změny ve formuláři.' : ''}</p>
+          <button type="button" onClick={importBirthday} disabled={loading || saving || importing || loadFailed} className="border border-primary-600 text-primary-700 rounded-md px-3 py-2 disabled:opacity-50">{importing ? 'Načítání…' : 'Načíst z Google účtu'}</button>
+          <p className="text-sm text-gray-500 mt-1">Google vás požádá o souhlas s přístupem k datu narození.</p>
         </div>}</div>
       <div><span className="block font-medium mb-1">Datum svátku</span>
         <div className="flex gap-3">

@@ -13,11 +13,15 @@ export function BirthdayReminder() {
     let active = true
     setMissing(false)
     setDismissed(sessionStorage.getItem(`birthday-reminder-${user.id}`) === 'dismissed')
-    supabase.from('profile_dates').select('birth_date').eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
-      if (error) { console.error('Failed to check birthday:', error); return }
-      if (active) setMissing(!data?.birth_date)
-    })
-    return () => { active = false }
+    const refresh = () => {
+      supabase.from('profile_dates').select('birth_date').eq('user_id', user.id).maybeSingle().then(({ data, error }) => {
+        if (error) { console.error('Failed to check birthday:', error); return }
+        if (active) setMissing(!data?.birth_date)
+      })
+    }
+    refresh()
+    window.addEventListener('profile-dates-changed', refresh)
+    return () => { active = false; window.removeEventListener('profile-dates-changed', refresh) }
   }, [user])
 
   if (!user || !missing || dismissed) return null
