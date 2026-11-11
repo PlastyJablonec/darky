@@ -11,6 +11,12 @@ interface GiftFilterOptions {
   sort: GiftSort
 }
 
+export const BUDGET_TOLERANCE_CZK = 100
+
+export function budgetLimit(amount: number): number {
+  return amount + BUDGET_TOLERANCE_CZK
+}
+
 const priorities: Record<string, number> = { high: 0, medium: 1, low: 2 }
 
 export function filterAndSortGifts(gifts: Gift[], options: GiftFilterOptions): Gift[] {
