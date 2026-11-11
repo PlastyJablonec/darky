@@ -29,7 +29,7 @@ export const giftService = {
     // 4. Fetch profiles for these users
     const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
-      .select('id, display_name, email')
+      .select('id, display_name')
       .in('id', reserverIds)
 
     if (profilesError) {
@@ -47,7 +47,7 @@ export const giftService = {
           ...gift,
           reserved_by_profile: {
             display_name: profile.display_name,
-            email: profile.email
+            email: null
           }
         }
       }

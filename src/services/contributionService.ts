@@ -23,7 +23,7 @@ export class ContributionService {
     const contributorIds = [...new Set(contributions.map(c => c.contributor_id))]
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, display_name, email')
+      .select('id, display_name')
       .in('id', contributorIds)
 
     // Get current user info for fallback
@@ -36,7 +36,7 @@ export class ContributionService {
       
       // Use profile data first, then fallback to current user metadata if it's current user
       let displayName = profile?.display_name
-      let email = profile?.email
+      let email = contribution.contributor_id === currentUser?.id ? currentUser?.email : undefined
       
       // If no profile data and it's current user, use auth metadata
       if (!displayName && currentUser && contribution.contributor_id === currentUser.id) {
@@ -271,7 +271,7 @@ export class ContributionService {
     const senderIds = [...new Set(messages.map(m => m.sender_id))]
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id, display_name, email')
+      .select('id, display_name')
       .in('id', senderIds)
 
     return messages.map(message => {
@@ -280,7 +280,7 @@ export class ContributionService {
         id: message.id,
         giftId: message.gift_id,
         senderId: message.sender_id,
-        senderName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
+        senderName: profile?.display_name || 'Neznámý',
         message: message.message,
         createdAt: new Date(message.created_at)
       }
@@ -311,7 +311,7 @@ export class ContributionService {
     // Get sender profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('display_name, email')
+      .select('display_name')
       .eq('id', user.user.id)
       .maybeSingle()
 
@@ -319,7 +319,7 @@ export class ContributionService {
       id: newMessage.id,
       giftId: newMessage.gift_id,
       senderId: newMessage.sender_id,
-      senderName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
+      senderName: profile?.display_name || 'Neznámý',
       message: newMessage.message,
       createdAt: new Date(newMessage.created_at)
     }
@@ -359,7 +359,7 @@ export class ContributionService {
     // Get profile data
     const { data: profile } = await supabase
       .from('profiles')
-      .select('display_name, email')
+      .select('display_name')
       .eq('id', user.user.id)
       .maybeSingle()
 
@@ -369,8 +369,8 @@ export class ContributionService {
       contributorId: data.contributor_id,
       contributorName: data.is_anonymous 
         ? 'Anonymní přispěvatel' 
-        : (profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý'),
-      contributorEmail: data.is_anonymous ? undefined : profile?.email,
+        : (profile?.display_name || user.user.email?.split('@')[0] || 'Neznámý'),
+      contributorEmail: data.is_anonymous ? undefined : user.user.email,
       amount: data.amount,
       currency: data.currency,
       message: data.message || undefined,

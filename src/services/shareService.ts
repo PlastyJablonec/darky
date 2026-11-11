@@ -162,7 +162,7 @@ export class ShareService {
       // 5. Načíst profily vlastníků
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, display_name, email')
+        .select('id, display_name')
         .in('id', ownerIds)
 
       const { data: profileDates, error: datesError } = await supabase
@@ -189,10 +189,10 @@ export class ShareService {
             managed_person: managedPeople.find(p => p.wishlist_id === wishlist.id) || null,
             users: {
               id: ownerId,
-              email: profile?.email || `user-${ownerId?.slice(0, 8)}`,
+              email: `user-${ownerId?.slice(0, 8)}`,
               display_name: profile?.display_name,
               raw_user_meta_data: {
-                display_name: profile?.display_name || profile?.email?.split('@')[0]
+                display_name: profile?.display_name
               }
             }
           }
@@ -295,7 +295,7 @@ export class ShareService {
         const userIds = shares.map(s => s.shared_with)
         const { data: profilesData } = await supabase
           .from('profiles')
-          .select('id, display_name, email')
+          .select('id, display_name')
           .in('id', userIds)
         profiles = profilesData || []
       }
@@ -307,8 +307,7 @@ export class ShareService {
           accessList.push({
             id: share.id,
             userId: share.shared_with,
-            displayName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
-            email: profile?.email,
+            displayName: profile?.display_name || 'Neznámý',
             accessType: 'shared', // explicitně sdílené
             sharedAt: share.created_at,
             lastViewedAt: share.viewed_at,
@@ -327,16 +326,15 @@ export class ShareService {
             // Získáme profil uživatele
             const { data: profile } = await supabase
               .from('profiles')
-              .select('display_name, email')
+              .select('display_name')
               .eq('id', view.viewer_id)
               .single()
 
             accessList.push({
               id: `view-${view.viewer_id}`,
               userId: view.viewer_id,
-              displayName: profile?.display_name || profile?.email?.split('@')[0] || 'Neznámý',
-              email: profile?.email,
-              accessType: 'public', // přišel přes veřejný odkaz
+              displayName: profile?.display_name || 'Neznámý',
+                accessType: 'public', // přišel přes veřejný odkaz
               sharedAt: null,
               lastViewedAt: view.viewed_at,
               firstViewedAt: view.first_viewed_at,

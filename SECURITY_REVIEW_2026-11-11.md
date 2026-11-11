@@ -8,9 +8,13 @@ Apply the following migrations, in order, after taking a verified PostgreSQL bac
 
 1. `security-gift-updates.sql` restricts non-owner gift updates to legitimate reservations. It preserves owner edits and automatic group-gift funding. `test-security-gift-updates.sql` tests these cases inside a transaction; the migration must first be copied into the database container as `/tmp/security-gift-updates.sql`.
 2. `security-sharing-privacy.sql` validates that the share owner owns the referenced wishlist, restricts share updates to view timestamps, validates profile date access through the actual owner, and revokes table administration privileges from API roles. Its initial profile policy is self-only.
-3. `security-profile-visibility.sql` grants profile visibility to the user and users with a documented sharing, reservation, viewing or group-contribution relationship. Its fixed-search-path helper uses the authenticated user identity, and is executable only by authenticated users.
-4. `security-suggestion-access.sql` restricts suggestion reads to accessible gifts and prevents suggestions on another user's inaccessible or already-group gift.
-5. `security-function-execution.sql` removes direct API execution of internal security-definer helpers and anonymous access to the funding-status helper.
+3. `security-contribution-integrity.sql` prevents contributors from transferring an existing pledge to another gift or user.
+4. `security-profile-visibility.sql` grants profile name visibility to the user and users with a sharing or group-contribution relationship. Its fixed-search-path helper uses the authenticated user identity, and is executable only by authenticated users.
+5. `security-profile-columns.sql` denies client access to account email columns and permits only profile identifiers and display names; profile email addresses are no longer shown in the access-management interface.
+6. `security-suggestion-access.sql` restricts suggestion reads to accessible gifts and prevents suggestions on another user's inaccessible or already-group gift.
+7. `security-function-execution.sql` removes direct API execution of internal security-definer helpers and anonymous access to the funding-status helper.
+
+8. `security-view-integrity.sql` blocks forged user identities and views of inaccessible lists.
 
 The production Raspberry Pi was backed up before each change. Role-switched rollback tests covered unauthorized editing, reservation ownership, group funding, forged shares, profile visibility and private suggestions. Anonymous REST requests returned no profile, date or contribution rows.
 
@@ -24,6 +28,6 @@ The Kong port was rebound from all interfaces to `127.0.0.1:8000`. The Cloudflar
 
 The previously exposed Gemini key belongs to the coJim project and is also present in its deployed frontend. Removing it from a new DarekList deployment does not revoke copies from previous releases. Do not place a replacement in Vite client variables; move both apps to an authenticated, rate-limited server-side design and then revoke the shared key after coJim is migrated. It is not safe to delete it blindly while coJim still depends on it.
 
-The Raspberry Pi has pending OS package upgrades; UFW was not installed and SSH password login remained enabled. Other services expose LAN ports; their intended use, router port forwarding, Cloudflare Zero Trust configuration, firewall policy and update/reboot plan require a separate coordinated review. This check did not prove whether a third party previously accessed the system. TLS and authentication defenses should be checked again after changes to hosting or tunnel configuration.
+The Raspberry Pi has pending OS package upgrades; UFW was not installed and SSH password login remained enabled. Other services expose LAN ports; their intended use, router port forwarding, Cloudflare Zero Trust configuration, firewall policy and update/reboot plan require a separate coordinated review. This check did not prove whether a third party previously accessed the system. Recreating the Kong container discarded its prior container-local Docker logs, limiting retrospective investigation; check Cloudflare logs or other retained log exports if available. TLS and authentication defenses should be checked again after changes to hosting or tunnel configuration.
 
 Production dependency audit after compatible upgrades reports two moderate React Router 6 advisories; their registry fix requires a major upgrade to version 7. Return paths have an application-level same-origin validation, but a major-version upgrade and full route regression tests remain recommended. CSP allows `style-src 'unsafe-inline'` for React inline styles; it is not a substitute for a full security review.

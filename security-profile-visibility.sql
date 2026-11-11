@@ -9,14 +9,6 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
          OR (s.shared_with = auth.uid() AND s.shared_by = p_profile_id)
     )
     OR EXISTS (
-      SELECT 1 FROM public.gifts g JOIN public.wishlists w ON w.id = g.wishlist_id
-      WHERE w.user_id = auth.uid() AND g.reserved_by = p_profile_id
-    )
-    OR EXISTS (
-      SELECT 1 FROM public.wishlist_views v JOIN public.wishlists w ON w.id = v.wishlist_id
-      WHERE w.user_id = auth.uid() AND v.viewer_id = p_profile_id
-    )
-    OR EXISTS (
       SELECT 1 FROM public.gift_contributions mine
       JOIN public.gift_contributions theirs ON theirs.gift_id = mine.gift_id
       JOIN public.gifts g ON g.id = mine.gift_id JOIN public.wishlists w ON w.id = g.wishlist_id
