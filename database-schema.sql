@@ -77,23 +77,23 @@ CREATE INDEX idx_gift_contribution_messages_created_at ON public.gift_contributi
 -- Gift Contributions Policies
 ALTER TABLE public.gift_contributions ENABLE ROW LEVEL SECURITY;
 
--- Contributors can see all contributions for gifts they contributed to (but not the gift owner)
+-- The helper bypasses contribution RLS only to check the current user's own membership.
+CREATE OR REPLACE FUNCTION public.current_user_contributed_to_gift(p_gift_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT EXISTS (SELECT 1 FROM public.gift_contributions c
+    WHERE c.gift_id = p_gift_id AND c.contributor_id = auth.uid());
+$$;
+REVOKE ALL ON FUNCTION public.current_user_contributed_to_gift(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.current_user_contributed_to_gift(uuid) FROM anon;
+GRANT EXECUTE ON FUNCTION public.current_user_contributed_to_gift(uuid) TO authenticated;
+
 CREATE POLICY "Contributors can view contributions for their group gifts" ON public.gift_contributions
-  FOR SELECT USING (
-    -- User contributed to this gift
-    contributor_id = auth.uid()
-    OR 
-    -- User contributed to ANY contribution for this gift (can see other contributors)
-    gift_id IN (
-      SELECT gift_id FROM public.gift_contributions 
-      WHERE contributor_id = auth.uid()
-    )
-    AND
-    -- But NOT if user is the gift owner (no spoilers!)
-    gift_id NOT IN (
-      SELECT g.id FROM public.gifts g
-      JOIN public.wishlists w ON g.wishlist_id = w.id
-      WHERE w.user_id = auth.uid()
+  FOR SELECT TO authenticated USING (
+    contributor_id = auth.uid() OR (
+      public.current_user_contributed_to_gift(gift_id) AND NOT EXISTS (
+        SELECT 1 FROM public.gifts g JOIN public.wishlists w ON w.id = g.wishlist_id
+        WHERE g.id = gift_contributions.gift_id AND w.user_id = auth.uid()
+      )
     )
   );
 
