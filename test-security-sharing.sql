@@ -23,7 +23,7 @@ END $$;
 UPDATE public.wishlist_shares SET viewed_at=now() WHERE wishlist_id='a63ddfde-35a0-486c-9094-8d37a2f330b4';
 SET LOCAL ROLE anon;
 SELECT set_config('request.jwt.claim.sub', '', true) AS ignored \gset
-DO $$ BEGIN IF (SELECT count(*) FROM public.profiles) <> 0 THEN RAISE EXCEPTION 'anonymous profiles exposed'; END IF; END $$;
+DO $$ BEGIN BEGIN IF (SELECT count(*) FROM public.profiles) <> 0 THEN RAISE EXCEPTION 'anonymous profiles exposed'; END IF; EXCEPTION WHEN insufficient_privilege THEN NULL; END; END $$;
 RESET ROLE;
 DO $$ BEGIN IF has_table_privilege('anon','public.gifts','TRUNCATE') OR has_table_privilege('authenticated','public.gifts','TRUNCATE') THEN RAISE EXCEPTION 'truncate privilege exposed'; END IF; END $$;
 ROLLBACK;

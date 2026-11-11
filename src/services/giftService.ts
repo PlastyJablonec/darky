@@ -25,6 +25,8 @@ export const giftService = {
 
     // 3. If no reservations, return gifts as is
     if (reserverIds.length === 0) return gifts
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return gifts
 
     // 4. Fetch profiles for these users
     const { data: profiles, error: profilesError } = await supabase
