@@ -9,8 +9,8 @@ DROP POLICY IF EXISTS "Profile dates visible to owner and recipients" ON public.
 CREATE POLICY "Profile dates visible to owner and recipients" ON public.profile_dates
   FOR SELECT TO authenticated USING (
     user_id = auth.uid() OR EXISTS (
-      SELECT 1 FROM public.wishlist_shares s
-      WHERE s.shared_by = profile_dates.user_id AND s.shared_with = auth.uid()
+      SELECT 1 FROM public.wishlist_shares s JOIN public.wishlists w ON w.id = s.wishlist_id
+      WHERE s.shared_by = profile_dates.user_id AND w.user_id = profile_dates.user_id AND s.shared_with = auth.uid()
     )
   );
 DROP POLICY IF EXISTS "Users insert own profile dates" ON public.profile_dates;

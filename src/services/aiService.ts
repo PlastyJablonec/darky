@@ -1,7 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { Gift } from '@/types'
-
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 export interface AITip {
     title: string
@@ -12,7 +9,6 @@ export interface AITip {
 }
 
 export class AIService {
-    private static genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null
 
     private static getFallbackTips(wishes: Gift[]): AITip[] {
         console.log("DárekList: Generuji tipy ze Smart Fallback v4.2");
@@ -275,125 +271,10 @@ export class AIService {
         return pool.sort(() => 0.5 - Math.random()).slice(0, 3);
     }
 
-    private static parseRobustJSON(text: string): any {
-        if (!text) return null;
-        const cleaned = text.replace(/```json\s*|\s*```/g, '').trim();
-        try {
-            return JSON.parse(cleaned);
-        } catch (e) {
-            const match = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-            if (match) {
-                try {
-                    return JSON.parse(match[0]);
-                } catch (e2) {
-                    try {
-                        let fixed = match[0];
-                        const openBraces = (fixed.match(/\{/g) || []).length;
-                        const closeBraces = (fixed.match(/\}/g) || []).length;
-                        if (openBraces > closeBraces) fixed += '}'.repeat(openBraces - closeBraces);
-
-                        const openBrackets = (fixed.match(/\[/g) || []).length;
-                        const closeBrackets = (fixed.match(/\]/g) || []).length;
-                        if (openBrackets > closeBrackets) fixed += ']'.repeat(openBrackets - closeBrackets);
-
-                        return JSON.parse(fixed);
-                    } catch (e3) {
-                        console.error("DárekList: JSON parsování selhalo.");
-                        throw e;
-                    }
-                }
-            }
-            throw e;
-        }
-    }
-
-    static async analyzeGiftsAndGetTips(wishes: Gift[], ownedGifts: Gift[], occasion?: string): Promise<AITip[]> {
-        if (!this.genAI) return this.getFallbackTips(wishes);
-
-        const wishesList = wishes.length > 0
-            ? wishes.map((w, i) => `${i + 1}. ${w.title}${w.description ? ` (${w.description})` : ''}`).join('\n')
-            : 'Prázdný seznam';
-
-        const prompt = `
-      Jsi špičkový expert na dárky a nákupní poradce. Tvým úkolem je navrhnout 3 dárky, které na seznamu NEROZUMI, ale skvěle ho doplňují.
-
-      SEZNAM PŘÁNÍ (Tyto věci uživatel CHCE, takže je NIKDY nenavrhuj znovu):
-      ${wishesList}
-      
-      UŽIVATEL JIŽ VLASTNÍ / NECHCE:
-      ${ownedGifts.length > 0 ? ownedGifts.map(g => g.title).join(', ') : 'Nic'}
-      
-      ${occasion ? `PŘÍLEŽITOST: ${occasion}` : ''}
-      
-      INSTRUKCE PRO NÁVRH:
-      1. ABSOLUTNÍ ZÁKAZ DUPLICIT: Nenavrhuj nic, co už je na Seznamu přání nebo v seznamu Již vlastní.
-      2. KONTEXTOVÉ DOPLNĚNÍ (DÁREK, KTERÝ SEDÍ): Pokud má uživatel na seznamu konkrétní techniku (např. Samsung Watch Ultra), navrhni k nim doplněk (např. kvalitní náhradní řemínek, nabíjecí stojánek nebo ochranu), ale ne další podobné hodinky.
-      3. BUĎ KONKRÉTNÍ: Místo obecného "příslušenství" navrhni konkrétní a zajímavý produkt (např. "Designová dockovací stanice pro Apple/Samsung").
-      4. ČESKY: Celá odpověď musí být v češtině.
-
-      Odpověď vrať VÝHRADNĚ jako JSON objekt:
-      {
-        "tips": [
-          {
-            "title": "název dárku",
-            "description": "stručný popis (max 150 znaků)",
-            "estimatedPrice": 1200, 
-            "reasoning": "vysvětlení, proč je to skvělý doplněk k existujícímu seznamu"
-          }
-        ]
-      }
-    `;
-
-        const modelsToTry = [
-            { name: 'gemini-3-flash-preview', version: 'v1beta', jsonMode: true },
-            { name: 'gemini-2.5-flash', version: 'v1beta', jsonMode: true },
-            { name: 'gemini-2.0-flash', version: 'v1beta', jsonMode: true },
-            { name: 'gemini-1.5-flash', version: 'v1', jsonMode: false }
-        ];
-
-        let lastError: any = null;
-
-        for (const modelCfg of modelsToTry) {
-            const attempts = modelCfg.jsonMode ? [true, false] : [false];
-            for (const useJson of attempts) {
-                try {
-                    const config: any = {
-                        temperature: 0.7,
-                        maxOutputTokens: 2048,
-                    };
-                    if (useJson) config.responseMimeType = "application/json";
-
-                    const model = this.genAI!.getGenerativeModel(
-                        { model: modelCfg.name, generationConfig: config },
-                        { apiVersion: modelCfg.version as any }
-                    );
-
-                    console.log(`DárekList: Zkouším ${modelCfg.name} (${modelCfg.version}, JSON: ${useJson})...`);
-                    const result = await model.generateContent(prompt);
-                    const response = await result.response;
-                    const text = response.text();
-
-                    if (!text) continue;
-
-                    const data = this.parseRobustJSON(text);
-                    const tipsList = data.tips || (Array.isArray(data) ? data : []);
-                    return tipsList.map((t: any) => ({ ...t, source: 'ai' }));
-                } catch (error: any) {
-                    lastError = error;
-                    if (useJson && (error.message?.includes('400') || error.message?.includes('Unknown name'))) {
-                        console.warn(`DárekList: ${modelCfg.name} nepodporuje JSON Mode, zkouším bez něj...`);
-                        continue;
-                    }
-                    console.warn(`DárekList: ${modelCfg.name} selhal:`, error.message);
-                    if (error.message?.includes('429')) await new Promise(r => setTimeout(r, 1000));
-                    break;
-                }
-            }
-        }
-
-        console.error('DárekList: AI vyčerpáno.', lastError);
-        return this.getFallbackTips(wishes);
+    // The browser must not receive a secret API key. Use local suggestions until a protected backend is configured.
+    static async analyzeGiftsAndGetTips(wishes: Gift[], _ownedGifts: Gift[], _occasion?: string): Promise<AITip[]> {
+        return this.getFallbackTips(wishes)
     }
 }
 
-export const aiService = AIService;
+export const aiService = AIService

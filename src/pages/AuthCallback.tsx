@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { safeReturnTo } from '@/utils/safeReturnTo'
 import { useAuth } from '@/context/AuthContext'
 import { Gift } from 'lucide-react'
 
@@ -27,25 +28,8 @@ export function AuthCallback() {
         if (!loading && mounted) {
           if (user) {
             console.log('✅ Auth callback - uživatel přihlášen:', user.email)
-            const returnTo = searchParams.get('returnTo') || '/wishlists'
-            
-            // Pokud jsme na produkci ale returnTo obsahuje localhost, přesměruj na localhost
-            const isProduction = window.location.hostname.includes('vercel.app')
-            const returnToLocalhost = returnTo.includes('localhost') || 
-                                    searchParams.get('dev') === 'true'
-                                    
-            if (isProduction && returnToLocalhost) {
-              // Přesměruj na localhost
-              window.location.href = `http://localhost:3000${returnTo.startsWith('/') ? returnTo : '/wishlists'}`
-              return
-            }
-            
-            // Normální přesměrování
-            if (returnTo.startsWith('http')) {
-              window.location.href = returnTo
-            } else {
-              window.location.href = `${window.location.origin}${returnTo}`
-            }
+            const returnTo = safeReturnTo(searchParams.get('returnTo'))
+            window.location.href = returnTo
             return
           } else {
             console.log('⏳ Auth callback - čekání na session...')

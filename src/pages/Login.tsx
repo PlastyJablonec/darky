@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { safeReturnTo } from '@/utils/safeReturnTo'
 import { useAuth } from '@/context/AuthContext'
 import { Gift, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { Footer } from '@/components/Footer'
@@ -19,9 +20,8 @@ export function Login() {
   const [isLoading, setIsLoading] = useState(false)
 
   // Získat návratovou URL z query parametrů nebo z location state
-  const returnTo = searchParams.get('returnTo')
-    || `${location.state?.from?.pathname || ''}${location.state?.from?.search || ''}`
-    || '/wishlists'
+  const returnTo = safeReturnTo(searchParams.get('returnTo')
+    || `${location.state?.from?.pathname || ''}${location.state?.from?.search || ''}`)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

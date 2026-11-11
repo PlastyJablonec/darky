@@ -1,3 +1,4 @@
+import { isHttpUrl } from '@/utils/urlUtils'
 import { useState, useEffect } from 'react'
 import { Edit, Trash2, ExternalLink, ShoppingCart, Users, Lock, Plus, MessageCircle, CheckCircle, X, ThumbsUp } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -301,7 +302,7 @@ export function EnhancedGiftCard({
               {displayPrice()}
             </div>
 
-            {gift.product_url && (
+            {gift.product_url && isHttpUrl(gift.product_url) && (
               <a
                 href={gift.product_url}
                 target="_blank"

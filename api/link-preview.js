@@ -1,5 +1,6 @@
+import { fetchPublicHtml } from '../server/safe-fetch.js'
+
 const REQUEST_TIMEOUT_MS = 8000
-const FALLBACK_USER_AGENT = 'DarekListBot/1.0 (+https://darky-seznam.vercel.app)'
 
 function sendError(response, statusCode, message) {
   response.status(statusCode).json({ error: message })
@@ -130,39 +131,13 @@ export default async function handler(request, response) {
     return sendError(response, 400, 'Podporovany je pouze http/https odkaz')
   }
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
-
   try {
-    const upstreamResponse = await fetch(normalizedUrl.toString(), {
-      headers: {
-        'User-Agent': FALLBACK_USER_AGENT,
-        Accept: 'text/html,application/xhtml+xml',
-      },
-      redirect: 'follow',
-      signal: controller.signal,
-    })
-
-    if (!upstreamResponse.ok) {
-      return sendError(response, 422, 'Zdrojova stranka nevratila pouzitelny obsah')
-    }
-
-    const contentType = upstreamResponse.headers.get('content-type') || ''
-    if (!contentType.includes('text/html')) {
-      return sendError(response, 422, 'Odkaz nevede na HTML stranku s metadaty')
-    }
-
-    const html = await upstreamResponse.text()
+    const html = await fetchPublicHtml(normalizedUrl.toString(), REQUEST_TIMEOUT_MS)
     const data = getPreviewPayload(normalizedUrl.toString(), html)
     return response.status(200).json({ data })
   } catch (error) {
-    const isAbortError = error instanceof Error && error.name === 'AbortError'
-    return sendError(
-      response,
-      502,
-      isAbortError ? 'Nacitam stranku prilis dlouho, zkuste to znovu.' : 'Metadata odkazu se nepodarilo nacist.',
-    )
-  } finally {
-    clearTimeout(timeout)
+    console.error('Link preview failed:', error instanceof Error ? error.message : 'unknown error')
+    return sendError(response, 422, 'Metadata odkazu se nepodařilo načíst. Zkontrolujte veřejnou adresu.')
   }
 }
+

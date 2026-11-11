@@ -1,3 +1,4 @@
+import { isHttpUrl } from '@/utils/urlUtils'
 import { useState, useEffect } from 'react'
 import { MoreHorizontal, Edit, Trash2, ExternalLink, ShoppingCart, Users, Lock, Plus, MessageCircle } from 'lucide-react'
 import { Menu, Transition } from '@headlessui/react'
@@ -208,7 +209,7 @@ export function GroupGiftCard({
               {displayPrice()}
             </div>
             
-            {gift.product_url && (
+            {gift.product_url && isHttpUrl(gift.product_url) && (
               <a
                 href={gift.product_url}
                 target="_blank"

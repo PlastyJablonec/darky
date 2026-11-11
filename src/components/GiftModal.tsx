@@ -1,3 +1,4 @@
+import { isHttpUrl } from '@/utils/urlUtils'
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { ImageUpload } from './ImageUpload'
@@ -140,6 +141,11 @@ export function GiftModal({
 
     if (!formData.title.trim()) {
       setError('Název je povinný')
+      return
+    }
+
+    if (formData.productUrl.trim() && !isHttpUrl(formData.productUrl.trim())) {
+      setError('Odkaz na produkt musí začínat http:// nebo https://')
       return
     }
 

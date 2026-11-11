@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
@@ -13,20 +12,9 @@ import { SharedWithMe } from '@/pages/SharedWithMe'
 import { SharedWishlist } from '@/pages/SharedWishlist'
 import { WishlistDetail } from '@/pages/WishlistDetail'
 import { Wishlists } from '@/pages/Wishlists'
-import { runProductionDiagnostics } from '@/utils/debug'
 
 function App() {
   const { loading } = useAuth()
-  const isHostedEnvironment =
-    window.location.hostname !== 'localhost' &&
-    window.location.hostname !== '127.0.0.1'
-
-  useEffect(() => {
-    if (isHostedEnvironment) {
-      console.log('Starting hosted-environment diagnostics...')
-      runProductionDiagnostics()
-    }
-  }, [isHostedEnvironment])
 
   if (loading) {
     return (

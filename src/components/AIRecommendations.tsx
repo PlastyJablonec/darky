@@ -43,7 +43,7 @@ export function AIRecommendations({ wishes, receivedGifts, occasion, onAddGift }
                         </div>
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 leading-none">Chybí vám inspirace?</h3>
-                            <p className="text-sm text-gray-600 mt-1">AI analyzuje seznam a navrhne skvělý dárek</p>
+                            <p className="text-sm text-gray-600 mt-1">Tipy podle toho, co je na seznamu přání</p>
                         </div>
                     </div>
 

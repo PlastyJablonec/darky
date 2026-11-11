@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/config/supabase'
+import { safeReturnTo } from '@/utils/safeReturnTo'
 import { googleBirthdayScope, googleLoginPendingKey, saveMissingGoogleBirthday } from '@/services/googleBirthdayService'
 
 interface AuthContextType {
@@ -38,7 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (error) {
             console.error('Error getting session:', error)
           } else {
-            console.log('Initial session:', session?.user?.email || 'No user')
+            console.log('Initial session loaded')
             setSession(session)
             setUser(session?.user ?? null)
           }
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email || 'No user')
+        console.log('Auth state change:', event)
 
         if (mounted) {
           setSession(session)
@@ -66,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Po úspěšném přihlášení přesměrovat pouze pokud jsme na callback stránce
           if (event === 'SIGNED_IN' && session?.user && window.location.pathname === '/auth/callback') {
             const urlParams = new URLSearchParams(window.location.search)
-            const returnTo = urlParams.get('returnTo') || '/wishlists'
+            const returnTo = safeReturnTo(urlParams.get('returnTo'))
 
             // Malé zpoždění pro jistotu
             setTimeout(() => {
@@ -118,9 +119,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithGoogle = async () => {
     // Zachovat současnou URL pro návrat
     const currentUrl = window.location.href
-    const returnTo = currentUrl.includes('/login') || currentUrl.includes('/register')
-      ? new URLSearchParams(window.location.search).get('returnTo') || '/wishlists'
-      : window.location.pathname + window.location.search
+    const returnTo = safeReturnTo(currentUrl.includes('/login') || currentUrl.includes('/register')
+      ? new URLSearchParams(window.location.search).get('returnTo')
+      : window.location.pathname + window.location.search)
 
     // Použít aktuální origin pro redirect
     const redirectOrigin = window.location.origin

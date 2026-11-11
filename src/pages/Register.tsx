@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { safeReturnTo } from '@/utils/safeReturnTo'
 import { useAuth } from '@/context/AuthContext'
 import { Gift, Mail, Lock, User, Eye, EyeOff } from 'lucide-react'
 import { Footer } from '@/components/Footer'
@@ -21,7 +22,7 @@ export function Register() {
   const [success, setSuccess] = useState(false)
   
   // Získat návratovou URL z query parametrů
-  const returnTo = searchParams.get('returnTo') || '/wishlists'
+  const returnTo = safeReturnTo(searchParams.get('returnTo'))
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

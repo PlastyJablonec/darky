@@ -30,9 +30,9 @@ CREATE TRIGGER on_auth_user_created
 -- Row Level Security for profiles
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Users can view all profiles (for contributor names)
-CREATE POLICY "Profiles are viewable by everyone" ON public.profiles
-  FOR SELECT USING (true);
+-- New setups default to self-only until security-profile-visibility.sql is applied.
+CREATE POLICY "Profiles are viewable by authenticated users" ON public.profiles
+  FOR SELECT TO authenticated USING (id = auth.uid());
 
 -- Users can update their own profile
 CREATE POLICY "Users can update own profile" ON public.profiles
