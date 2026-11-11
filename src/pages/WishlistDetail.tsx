@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X, Shield, ArrowUpDown, Filter } from 'lucide-react'
+import { ArrowLeft, Plus, Share2, Eye, Users, ThumbsUp, CheckCircle, X, Shield } from 'lucide-react'
+import { GiftFilters } from '@/components/GiftFilters'
+import { useGiftFilters } from '@/hooks/useGiftFilters'
 import { ManagedPersonSummary } from '@/components/ManagedPersonSummary'
 import { Layout } from '@/components/Layout'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
@@ -17,9 +19,6 @@ import type { Database } from '@/types'
 
 type Wishlist = Database['public']['Tables']['wishlists']['Row']
 type Gift = Database['public']['Tables']['gifts']['Row']
-
-type SortOption = 'date_desc' | 'date_asc' | 'price_asc' | 'price_desc'
-type FilterOption = 'all' | 'available' | 'reserved'
 
 export function WishlistDetail() {
   const { id } = useParams<{ id: string }>()
@@ -47,9 +46,7 @@ export function WishlistDetail() {
   const [showAccessControl, setShowAccessControl] = useState(false)
   const [showConvertDialog, setShowConvertDialog] = useState(false)
 
-  // Sorting and Filtering State
-  const [sortBy, setSortBy] = useState<SortOption>('date_desc')
-  const [filterBy, setFilterBy] = useState<FilterOption>('all')
+  const filters = useGiftFilters(gifts)
 
   const [aiGiftData, setAiGiftData] = useState<{ title: string; description: string; price?: number } | null>(null)
 
@@ -236,29 +233,7 @@ export function WishlistDetail() {
     }
   }
 
-  // Filter and Sort Logic
-  const activeWishes = gifts
-    .filter(g => !g.is_received)
-    .filter(gift => {
-      if (filterBy === 'all') return true
-      if (filterBy === 'available') return !gift.is_reserved
-      if (filterBy === 'reserved') return gift.is_reserved
-      return true
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'date_desc':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        case 'date_asc':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        case 'price_asc':
-          return (a.price || 0) - (b.price || 0)
-        case 'price_desc':
-          return (b.price || 0) - (a.price || 0)
-        default:
-          return 0
-      }
-    })
+  const activeWishes = filters.filtered
 
   const receivedGifts = gifts.filter(g => g.is_received)
 
@@ -395,7 +370,7 @@ export function WishlistDetail() {
         {/* AI recommendations section */}
         {gifts.length > 0 && (
           <AIRecommendations
-            wishes={activeWishes}
+            wishes={filters.active}
             receivedGifts={receivedGifts}
             occasion={wishlist.occasion}
             onAddGift={handleAddAIRecommendedGift}
@@ -456,48 +431,8 @@ export function WishlistDetail() {
           </div>
         )}
 
-        {/* Filter Bar */}
-        {!giftsLoading && !giftsError && gifts.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-lg shadow-sm border border-gray-100 gap-4">
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              {/* Filter - Visible only to visitors or managed list owners */}
-              {(!isOwner || wishlist.type === 'managed') && (
-                <div className="flex items-center space-x-2">
-                  <Filter className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600 sm:hidden">Filtr:</span>
-                  <select
-                    value={filterBy}
-                    onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-                    className="block w-full sm:w-40 pl-3 pr-8 py-1.5 text-sm font-sans border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white text-gray-900"
-                  >
-                    <option value="all">Všechny dárky</option>
-                    <option value="available">K dispozici</option>
-                    <option value="reserved">Rezervované</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Sort - Always visible */}
-              <div className="flex items-center space-x-2">
-                <ArrowUpDown className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600 sm:hidden">Řazení:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="block w-full sm:w-40 pl-3 pr-8 py-1.5 text-sm font-sans border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md bg-white text-gray-900"
-                >
-                  <option value="date_desc">Nejnovější</option>
-                  <option value="date_asc">Nejstarší</option>
-                  <option value="price_asc">Od nejlevnějšího</option>
-                  <option value="price_desc">Od nejdražšího</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="text-sm text-gray-500 hidden sm:block font-sans">
-              {activeWishes.length} {activeWishes.length === 1 ? 'dárek' : activeWishes.length >= 2 && activeWishes.length <= 4 ? 'dárky' : 'dárků'}
-            </div>
-          </div>
+        {!giftsLoading && !giftsError && filters.active.length > 0 && (
+          <GiftFilters filters={filters} showAvailability={!isOwner || wishlist.type === 'managed'} />
         )}
 
         {giftsLoading ? (
@@ -508,7 +443,7 @@ export function WishlistDetail() {
           <div className="text-center py-12">
             <p className="text-red-600 mb-4">{giftsError}</p>
           </div>
-        ) : activeWishes.length === 0 && receivedGifts.length === 0 ? (
+        ) : gifts.length === 0 ? (
           <div className="text-center py-12">
             <div className="max-w-md mx-auto">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -536,6 +471,7 @@ export function WishlistDetail() {
           <div className="space-y-12">
             {/* Active Wishes Section */}
             <div className="space-y-6">
+              {activeWishes.length === 0 && filters.active.length > 0 && <p className="text-center text-gray-600 py-6">Žádný dárek neodpovídá zvoleným filtrům. Zkuste změnit jejich nastavení.</p>}
               <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {activeWishes.map((gift) => (
                   <EnhancedGiftCard

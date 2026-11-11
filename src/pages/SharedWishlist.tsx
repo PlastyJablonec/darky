@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Gift, Heart } from 'lucide-react'
+import { GiftFilters } from '@/components/GiftFilters'
+import { useGiftFilters } from '@/hooks/useGiftFilters'
 import { ManagedPersonSummary } from '@/components/ManagedPersonSummary'
 import { managedPersonService } from '@/services/managedPersonService'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
@@ -22,6 +24,7 @@ export function SharedWishlist() {
 
   const [wishlist, setWishlist] = useState<Wishlist | null>(null)
   const [gifts, setGifts] = useState<Gift[]>([])
+  const filters = useGiftFilters(gifts)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -77,13 +80,7 @@ export function SharedWishlist() {
     fetchSharedWishlist()
   }, [shareId, user])
 
-  const activeWishes = gifts
-    .filter(g => !g.is_received)
-    .sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 }
-      return (priorityOrder[a.priority as keyof typeof priorityOrder] || 0) -
-        (priorityOrder[b.priority as keyof typeof priorityOrder] || 0)
-    })
+  const activeWishes = filters.filtered
 
   const receivedGifts = gifts.filter(g => g.is_received)
 
@@ -255,11 +252,13 @@ export function SharedWishlist() {
 
           {gifts.length > 0 && (
             <AIRecommendations
-              wishes={activeWishes}
+              wishes={filters.active}
               receivedGifts={receivedGifts}
               occasion={wishlist.occasion}
             />
           )}
+
+          {filters.active.length > 0 && <GiftFilters filters={filters} showAvailability />}
 
           {gifts.length === 0 ? (
             <div className="text-center py-12">
@@ -273,6 +272,8 @@ export function SharedWishlist() {
                 V tomto seznamu zatím nejsou žádné dárky.
               </p>
             </div>
+          ) : activeWishes.length === 0 && filters.active.length > 0 ? (
+            <p className="text-center text-gray-600 py-6">Žádný dárek neodpovídá zvoleným filtrům. Zkuste změnit jejich nastavení.</p>
           ) : (
             <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {activeWishes.map((gift) => (

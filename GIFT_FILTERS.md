@@ -1,0 +1,5 @@
+# Gift filtering
+
+Active gifts are ordered by priority by default, with newest first within the same priority. The owner and visitors can sort by priority, date or price and filter by priority; availability remains hidden for owners of personal surprise lists. The optional price filter applies to one currency at a time, includes zero-priced gifts, and excludes gifts without prices while active. Price sorting places missing prices last; amounts in different currencies are not converted. Received gifts remain in the archive and do not affect the active-list filters or range. AI suggestions receive the complete active list rather than the filtered view.
+
+Run `node test-gift-filters.mjs` to check the priority, availability, currency, price boundary and missing-price behavior.
