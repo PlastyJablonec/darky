@@ -3,7 +3,9 @@ import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Gift, Heart } from 'lucide-react'
 import { GiftFilters } from '@/components/GiftFilters'
 import { useGiftFilters } from '@/hooks/useGiftFilters'
-import { ManagedPersonSummary } from '@/components/ManagedPersonSummary'
+import { SharedOccasions, type OccasionDates } from '@/components/SharedOccasions'
+import { ReservationOverview } from '@/components/ReservationOverview'
+import { supabase } from '@/config/supabase'
 import { managedPersonService } from '@/services/managedPersonService'
 import { EnhancedGiftCard } from '@/components/EnhancedGiftCard'
 import { ShareButtons } from '@/components/ShareButtons'
@@ -24,6 +26,7 @@ export function SharedWishlist() {
 
   const [wishlist, setWishlist] = useState<Wishlist | null>(null)
   const [gifts, setGifts] = useState<Gift[]>([])
+  const [occasions, setOccasions] = useState<OccasionDates | null>(null)
   const filters = useGiftFilters(gifts)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +38,7 @@ export function SharedWishlist() {
 
       try {
         setLoading(true)
+        setOccasions(null)
 
         // Načíst veřejný seznam
         const wishlistData = await wishlistService.getPublicWishlist(shareId)
@@ -63,10 +67,14 @@ export function SharedWishlist() {
           if (wishlistData.type === 'managed') {
             try {
               const people = await managedPersonService.getMany([wishlistData.id])
-              setWishlist({ ...wishlistData, managed_person: people[0] || null })
+              setOccasions(people[0] || null)
             } catch (personError) {
               console.error('Nepodařilo se načíst údaje spravované osoby:', personError)
             }
+          } else {
+            const { data: dates, error: dateError } = await supabase.from('profile_dates').select('birth_date, name_day').eq('user_id', wishlistData.user_id).maybeSingle()
+            if (dateError) console.error('Nepodařilo se načíst důležitá data:', dateError)
+            else setOccasions(dates)
           }
         }
 
@@ -79,6 +87,27 @@ export function SharedWishlist() {
 
     fetchSharedWishlist()
   }, [shareId, user])
+
+  useEffect(() => {
+    if (!wishlist?.id) return
+    let active = true
+    const refresh = async () => {
+      try {
+        const refreshed = await giftService.getWishlistGifts(wishlist.id)
+        if (active) setGifts(refreshed)
+      } catch (refreshError) {
+        console.error('Nepodařilo se aktualizovat přehled dárků:', refreshError)
+      }
+    }
+    const channel = supabase.channel(`shared-gifts-${wishlist.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gifts', filter: `wishlist_id=eq.${wishlist.id}` }, refresh)
+      .subscribe((status, subscriptionError) => {
+        if (subscriptionError) console.error('Nepodařilo se sledovat změny dárků:', subscriptionError)
+        if (status === 'SUBSCRIBED') void refresh()
+      })
+    window.addEventListener('focus', refresh)
+    return () => { active = false; window.removeEventListener('focus', refresh); void supabase.removeChannel(channel) }
+  }, [wishlist?.id])
 
   const activeWishes = filters.filtered
 
@@ -154,10 +183,10 @@ export function SharedWishlist() {
             <div className="flex items-center space-x-4">
               {!user ? (
                 <>
-                  <Link to="/login" className="btn-outline">
+                  <Link to={`/login?returnTo=${encodeURIComponent(`/shared/${shareId}`)}`} className="btn-outline">
                     Přihlásit se
                   </Link>
-                  <Link to="/register" className="btn-primary">
+                  <Link to={`/register?returnTo=${encodeURIComponent(`/shared/${shareId}`)}`} className="btn-primary">
                     Registrovat se
                   </Link>
                 </>
@@ -187,31 +216,15 @@ export function SharedWishlist() {
                 {wishlist.description && (
                   <p className="text-gray-600 mt-1">{wishlist.description}</p>
                 )}
-                {wishlist.type === 'managed' && <ManagedPersonSummary person={wishlist.managed_person} />}
+
               </div>
             </div>
 
-            {wishlist.type !== 'managed' && (
-              <div className="max-w-2xl mx-auto mt-6 mb-8">
-                <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                  <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-indigo-100 rounded-full opacity-50 blur-xl"></div>
-                  <div className="flex items-start gap-4 relative z-10">
-                    <div className="flex-shrink-0 bg-indigo-100 p-2 rounded-full">
-                      <span className="text-2xl" role="img" aria-label="shush">🤫</span>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-indigo-900 mb-1">
-                        Pssst! Nebojte se rezervovat
-                      </h3>
-                      <p className="text-indigo-800 text-sm leading-relaxed">
-                        Majitel tohoto seznamu <strong>nevidí vaše rezervace</strong>.
-                        Můžete si dárky v klidu rozebrat a o překvapení nikdo nepřijde!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="max-w-2xl mx-auto space-y-3 mt-6">
+              <SharedOccasions dates={occasions} />
+              {!user && <p className="text-sm text-gray-500"><Link className="text-primary-600 underline" to={`/login?returnTo=${encodeURIComponent(`/shared/${shareId}`)}`}>Přihlaste se</Link> pro zobrazení narozenin a svátku, pokud je vlastník vyplnil.</p>}
+              {(wishlist.type === 'managed' || user?.id !== wishlist.user_id) && <ReservationOverview gifts={gifts} personal={wishlist.type !== 'managed'} />}
+            </div>
 
             <div className="flex items-center justify-center mt-4">
               <ShareButtons
@@ -238,11 +251,11 @@ export function SharedWishlist() {
           {!user && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
               <p className="text-blue-800">
-                <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to={`/login?returnTo=${encodeURIComponent(`/shared/${shareId}`)}`} className="font-medium text-blue-600 hover:text-blue-500">
                   Přihlaste se
                 </Link>
                 {' '}nebo{' '}
-                <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to={`/register?returnTo=${encodeURIComponent(`/shared/${shareId}`)}`} className="font-medium text-blue-600 hover:text-blue-500">
                   se registrujte
                 </Link>
                 {' '}pro rezervaci dárků.
@@ -258,7 +271,7 @@ export function SharedWishlist() {
             />
           )}
 
-          {filters.active.length > 0 && <GiftFilters filters={filters} showAvailability />}
+          {filters.active.length > 0 && <GiftFilters filters={filters} showAvailability={user?.id !== wishlist.user_id || wishlist.type === 'managed'} />}
 
           {gifts.length === 0 ? (
             <div className="text-center py-12">
@@ -280,7 +293,8 @@ export function SharedWishlist() {
                 <EnhancedGiftCard
                   key={gift.id}
                   gift={gift}
-                  isOwner={false}
+                  isOwner={user?.id === wishlist.user_id}
+                  showReserved={wishlist.type === 'managed'}
                   onReserve={handleReserveGift}
                   onUnreserve={handleUnreserveGift}
                 />
@@ -299,7 +313,7 @@ export function SharedWishlist() {
                   <EnhancedGiftCard
                     key={gift.id}
                     gift={gift}
-                    isOwner={false}
+                    isOwner={user?.id === wishlist.user_id}
                     showReserved={false}
                   />
                 ))}
