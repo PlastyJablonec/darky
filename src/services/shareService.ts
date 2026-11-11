@@ -63,12 +63,17 @@ export class ShareService {
   static async updateShareView(wishlistId: string, viewerId: string) {
     try {
       // Najít existující share záznam
-      const { data: existingShare } = await supabase
+      const { data: existingShare, error: existingShareError } = await supabase
         .from('wishlist_shares')
         .select()
         .eq('wishlist_id', wishlistId)
         .eq('shared_with', viewerId)
-        .single()
+        .maybeSingle()
+
+      if (existingShareError) {
+        console.error('Chyba při načítání sdílení:', existingShareError)
+        return
+      }
 
       if (existingShare) {
         // Aktualizovat existující záznam
@@ -449,7 +454,7 @@ export class ShareService {
           .select('id')
           .eq('wishlist_id', wishlistId)
           .eq('shared_with', userId)
-          .single()
+          .maybeSingle()
 
         return !!share
       }

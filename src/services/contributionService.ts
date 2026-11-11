@@ -313,7 +313,7 @@ export class ContributionService {
       .from('profiles')
       .select('display_name, email')
       .eq('id', user.user.id)
-      .single()
+      .maybeSingle()
 
     return {
       id: newMessage.id,
@@ -335,9 +335,10 @@ export class ContributionService {
       .select('id')
       .eq('gift_id', giftId)
       .eq('contributor_id', user.user.id)
-      .single()
+      .maybeSingle()
 
-    return !error && !!data
+    if (error) throw error
+    return !!data
   }
 
   // Get user's contribution for a gift
@@ -350,16 +351,17 @@ export class ContributionService {
       .select('*')
       .eq('gift_id', giftId)
       .eq('contributor_id', user.user.id)
-      .single()
+      .maybeSingle()
 
-    if (error) return null
+    if (error) throw error
+    if (!data) return null
 
     // Get profile data
     const { data: profile } = await supabase
       .from('profiles')
       .select('display_name, email')
       .eq('id', user.user.id)
-      .single()
+      .maybeSingle()
 
     return {
       id: data.id,
