@@ -52,8 +52,8 @@ export function ImageCropEditor({ src, onApply, onCancel }: ImageCropEditorProps
   return (
     <div className="mt-3 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
       <p className="text-sm text-gray-700">Tažením rámečku a jeho okrajů vyberte část obrázku.</p>
-      <div className="flex max-h-80 justify-center overflow-auto bg-gray-100">
-        <ReactCrop crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)}>
+      <div className="flex justify-center bg-gray-100">
+        <ReactCrop className="max-h-80" crop={crop} onChange={(_, percentCrop) => setCrop(percentCrop)}>
           <img ref={imageRef} src={src} crossOrigin="anonymous" alt="Obrázek pro oříznutí"
             className="max-h-80 max-w-full" onError={() => setError('Obrázek nelze načíst pro oříznutí. Zkuste jej stáhnout a nahrát jako soubor.')} />
         </ReactCrop>
