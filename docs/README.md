@@ -2,6 +2,10 @@
 
 This folder contains operational documentation for the current production setup.
 
+## Image cropping
+
+In the gift or wishlist editor, select **Oříznout** below the image, adjust the selection and choose **Použít výřez**. The crop is processed locally and is saved when the form is submitted. Images hosted on another site can only be cropped if that site permits cross-origin access; otherwise download and upload the image first.
+
 ## Documents
 
 - [operations.md](./operations.md)

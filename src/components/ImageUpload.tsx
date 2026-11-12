@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Crop, Image as ImageIcon } from 'lucide-react'
+import { ImageCropEditor } from './ImageCropEditor'
+import { validateImageFile } from '@/utils/imageUtils'
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void
@@ -18,6 +20,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [dragActive, setDragActive] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [cropping, setCropping] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleDrag = (e: React.DragEvent) => {
@@ -49,6 +52,10 @@ export function ImageUpload({
   }
 
   const handleFile = (file: File) => {
+    if (!validateImageFile(file).valid) {
+      onImageSelect(file)
+      return
+    }
     // Vytvoř preview
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -61,6 +68,7 @@ export function ImageUpload({
   }
 
   const handleRemove = () => {
+    setCropping(false)
     setPreview(null)
     onImageRemove()
     if (fileInputRef.current) {
@@ -77,11 +85,16 @@ export function ImageUpload({
           <img
             src={displayImage}
             alt="Preview"
-            className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+            className="w-full h-40 object-contain bg-gray-50 rounded-lg border-2 border-gray-200"
           />
+          <button type="button" onClick={() => setCropping(true)}
+            className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-white px-2 py-1 text-sm text-gray-700 shadow hover:bg-gray-100">
+            <Crop className="h-4 w-4" /> Oříznout
+          </button>
           <button
             type="button"
             onClick={handleRemove}
+            aria-label="Odebrat obrázek"
             className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
           >
             <X className="h-4 w-4" />
@@ -118,6 +131,13 @@ export function ImageUpload({
             </div>
           </div>
         </div>
+      )}
+
+      {displayImage && cropping && (
+        <ImageCropEditor src={displayImage} onCancel={() => setCropping(false)} onApply={(file) => {
+          setCropping(false)
+          handleFile(file)
+        }} />
       )}
 
       <input

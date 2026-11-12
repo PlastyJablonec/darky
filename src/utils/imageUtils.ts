@@ -10,12 +10,22 @@ export const convertFileToBase64 = (file: File): Promise<string> => {
 }
 
 export const resizeImage = (file: File, maxWidth = 800, maxHeight = 600, quality = 0.8): Promise<string> => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     const img = new Image()
 
+    const objectUrl = URL.createObjectURL(file)
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('Image could not be loaded'))
+    }
     img.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      if (!ctx) {
+        reject(new Error('Canvas is unavailable'))
+        return
+      }
       // Vypočítej nové rozměry s poměrem stran
       let { width, height } = img
       
@@ -42,7 +52,7 @@ export const resizeImage = (file: File, maxWidth = 800, maxHeight = 600, quality
       resolve(resizedBase64)
     }
 
-    img.src = URL.createObjectURL(file)
+    img.src = objectUrl
   })
 }
 
