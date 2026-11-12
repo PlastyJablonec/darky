@@ -4,7 +4,7 @@ import 'react-image-crop/dist/ReactCrop.css'
 
 interface ImageCropEditorProps {
   src: string
-  onApply: (file: File) => void
+  onApply: (imageUrl: string) => void
   onCancel: () => void
 }
 
@@ -27,21 +27,17 @@ export function ImageCropEditor({ src, onApply, onCancel }: ImageCropEditorProps
       const canvas = document.createElement('canvas')
       const width = image.naturalWidth * crop.width / 100
       const height = image.naturalHeight * crop.height / 100
-      const scale = Math.min(1, 800 / width, 600 / height)
+      const scale = Math.min(1, 1600 / width, 1200 / height)
       canvas.width = Math.max(1, Math.round(width * scale))
       canvas.height = Math.max(1, Math.round(height * scale))
       const context = canvas.getContext('2d')
       if (!context) throw new Error('Canvas is unavailable')
+      context.imageSmoothingQuality = 'high'
       context.drawImage(image, image.naturalWidth * crop.x / 100, image.naturalHeight * crop.y / 100,
         width, height, 0, 0, canvas.width, canvas.height)
-      canvas.toBlob((blob) => {
-        setSaving(false)
-        if (!blob) {
-          setError('Obrázek se nepodařilo oříznout. Zkuste to prosím znovu.')
-          return
-        }
-        onApply(new File([blob], 'vyrez.jpg', { type: 'image/jpeg' }))
-      }, 'image/jpeg', 0.9)
+      const imageUrl = canvas.toDataURL('image/jpeg', 0.92)
+      setSaving(false)
+      onApply(imageUrl)
     } catch (err) {
       console.error('Image crop failed:', err)
       setSaving(false)

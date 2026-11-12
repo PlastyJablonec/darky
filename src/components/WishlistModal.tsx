@@ -90,7 +90,7 @@ export function WishlistModal({
 
     try {
       // Zmenši obrázek a převeď na base64
-      const resizedImage = await resizeImage(file, 800, 600, 0.8)
+      const resizedImage = await resizeImage(file, 1600, 1200, 0.92)
       setFormData(prev => ({
         ...prev,
         imageUrl: resizedImage
@@ -198,6 +198,7 @@ export function WishlistModal({
             </label>
             <ImageUpload
               onImageSelect={handleImageSelect}
+              onImageCrop={(imageUrl) => setFormData(prev => ({ ...prev, imageUrl }))}
               onImageRemove={handleImageRemove}
               currentImageUrl={formData.imageUrl}
               placeholder="Nahrajte obrázek nebo zadejte URL"

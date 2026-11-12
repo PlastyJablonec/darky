@@ -27,25 +27,16 @@ export const resizeImage = (file: File, maxWidth = 800, maxHeight = 600, quality
         return
       }
       // Vypočítej nové rozměry s poměrem stran
-      let { width, height } = img
-      
-      if (width > height) {
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width
-          width = maxWidth
-        }
-      } else {
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height
-          height = maxHeight
-        }
-      }
+      const scale = Math.min(1, maxWidth / img.naturalWidth, maxHeight / img.naturalHeight)
+      const width = Math.max(1, Math.round(img.naturalWidth * scale))
+      const height = Math.max(1, Math.round(img.naturalHeight * scale))
 
       canvas.width = width
       canvas.height = height
 
       // Vykresli zmenšený obrázek
-      ctx?.drawImage(img, 0, 0, width, height)
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(img, 0, 0, width, height)
 
       // Převeď na base64
       const resizedBase64 = canvas.toDataURL('image/jpeg', quality)

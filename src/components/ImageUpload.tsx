@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Upload, X, Crop, Image as ImageIcon } from 'lucide-react'
 import { ImageCropEditor } from './ImageCropEditor'
 import { validateImageFile } from '@/utils/imageUtils'
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void
+  onImageCrop: (imageUrl: string) => void
   onImageRemove: () => void
   currentImageUrl?: string
   className?: string
@@ -13,6 +14,7 @@ interface ImageUploadProps {
 
 export function ImageUpload({
   onImageSelect,
+  onImageCrop,
   onImageRemove,
   currentImageUrl,
   className = '',
@@ -22,6 +24,15 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(null)
   const [cropping, setCropping] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const awaitingOwnImage = useRef(false)
+
+  useEffect(() => {
+    if (awaitingOwnImage.current) {
+      awaitingOwnImage.current = false
+    } else {
+      setPreview(null)
+    }
+  }, [currentImageUrl])
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -56,6 +67,7 @@ export function ImageUpload({
       onImageSelect(file)
       return
     }
+    awaitingOwnImage.current = true
     // Vytvoř preview
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -134,9 +146,11 @@ export function ImageUpload({
       )}
 
       {displayImage && cropping && (
-        <ImageCropEditor src={displayImage} onCancel={() => setCropping(false)} onApply={(file) => {
+        <ImageCropEditor src={preview || displayImage} onCancel={() => setCropping(false)} onApply={(imageUrl) => {
           setCropping(false)
-          handleFile(file)
+          setPreview(imageUrl)
+          awaitingOwnImage.current = true
+          onImageCrop(imageUrl)
         }} />
       )}
 

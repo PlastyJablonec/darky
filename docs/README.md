@@ -6,6 +6,8 @@ This folder contains operational documentation for the current production setup.
 
 In the gift or wishlist editor, select **Oříznout** below the image, adjust the selection and choose **Použít výřez**. The crop is processed locally and is saved when the form is submitted. Images hosted on another site can only be cropped if that site permits cross-origin access; otherwise download and upload the image first.
 
+New uploads and crops are stored as JPEG images at up to 1600 × 1200 pixels. When cropping a newly selected file, the editor uses the original file and encodes the result once. Existing low-resolution images cannot regain lost detail without the original file.
+
 ## Documents
 
 - [operations.md](./operations.md)
