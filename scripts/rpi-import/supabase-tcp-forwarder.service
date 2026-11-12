@@ -1,0 +1,14 @@
+[Unit]
+Description=Supabase TCP forwarder for Cloudflare Tunnel
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /opt/supabase/tcp-forward-8090.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Gift } from 'lucide-react'
 import { safeReturnTo } from '@/utils/safeReturnTo'
 import { useAuth } from '@/context/AuthContext'
-import { Gift } from 'lucide-react'
 
 export function AuthCallback() {
   const navigate = useNavigate()
@@ -15,36 +15,33 @@ export function AuthCallback() {
 
     async function handleAuthCallback() {
       try {
-        // Zkontrolovat chyby z URL
         const errorParam = searchParams.get('error')
         const errorDescription = searchParams.get('error_description')
-        
+
         if (errorParam) {
           setError(errorDescription || errorParam)
           return
         }
 
-        // Počkat na dokončení auth procesu
         if (!loading && mounted) {
           if (user) {
-            console.log('✅ Auth callback - uživatel přihlášen:', user.email)
+            console.log('Auth callback - signed in user:', user.email)
             const returnTo = safeReturnTo(searchParams.get('returnTo'))
             window.location.href = returnTo
             return
-          } else {
-            console.log('⏳ Auth callback - čekání na session...')
-            // Počkat ještě chvíli
-            setTimeout(() => {
-              if (mounted && !user) {
-                console.log('❌ Auth callback - session se nenastavila')
-                setError('Problém s přihlášením. Zkuste to znovu.')
-              }
-            }, 3000)
           }
+
+          console.log('Auth callback - waiting for session...')
+          setTimeout(() => {
+            if (mounted && !user) {
+              console.log('Auth callback - session was not established')
+              setError('Problem s prihlacenim. Zkuste to znovu.')
+            }
+          }, 3000)
         }
       } catch (err) {
         console.error('Auth callback error:', err)
-        setError('Neočekávaná chyba při přihlašování')
+        setError('Neocekavana chyba pri prihlasovani')
       }
     }
 
@@ -63,7 +60,7 @@ export function AuthCallback() {
             <Gift className="h-8 w-8 text-red-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Chyba při přihlašování
+            Chyba pri prihlasovani
           </h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
@@ -82,10 +79,10 @@ export function AuthCallback() {
       <div className="text-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto mb-4"></div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Dokončování přihlášení...
+          Dokoncovani prihlaseni...
         </h2>
         <p className="text-gray-600">
-          {user ? 'Přesměrování...' : 'Ověřování účtu...'}
+          {user ? 'Presmerovani...' : 'Overovani uctu...'}
         </p>
       </div>
     </div>

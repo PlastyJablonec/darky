@@ -1,90 +1,161 @@
-# 🎁 DárekList
+# DarekList
 
-**Moderní aplikace pro správu a sdílení seznamů přání.**
+Web application for creating, sharing and reserving wishlists with support for personal lists, managed lists, shared access and group gifts.
 
-Už žádné nechtěné dárky nebo trapné situace, kdy dostanete to samé dvakrát. S DárekListem vytvoříte seznam, sdílíte ho s blízkými a oni si dárky jednoduše zarezervují.
+## Project Status
 
-## ✨ Klíčové Funkce
+The project currently runs in this production setup:
 
-### 📝 Správa Seznamů
-- **Neomezené seznamy**: Vytvořte si seznam pro každou příležitost – Vánoce, Narozeniny, Svatba nebo jen tak pro radost.
-- **Dva typy seznamů**:
-    - **Osobní**: Klasický seznam pro vaše přání. Vy jako majitel **nevidíte**, kdo a co vám rezervoval. Překvapení zůstává zachováno! 🤫
-    - **Spravovaný**: Ideální pro děti nebo hromadné akce. Jako majitel **vidíte** veškeré rezervace a máte dokonalý přehled o tom, co kdo kupuje.
-- **Inteligentní návrhy (AI v4.0)**: Pokud vám dochází inspirace, AI (Google Gemini) analyzuje stávající položky v seznamu a navrhne 3 další dárky, které by se mohly oslavenci líbit. Funguje i v offline režimu díky robustnímu fallback systému.y.
-- **Snadné přidávání dárků**: Vložte název, odkaz, cenu a obrázek. Dárky můžete řadit podle priority.
+- Frontend: Vercel
+- Public frontend URL: `https://darky-seznam.vercel.app`
+- Backend API: self-hosted Supabase on Raspberry Pi
+- Public Supabase API URL: `https://api.brana-plasty.work`
+- Public access bridge: Cloudflare Tunnel
+- Database: PostgreSQL inside the self-hosted Supabase stack
+- Auth: Supabase Auth with email/password and Google OAuth
 
-### 🤝 Sdílení a Rezervace
-- **Jednoduché sdílení**: Pošlete unikátní odkaz rodině nebo přátelům. Nemusí se registrovat, aby viděli váš seznam.
-- **Rezervace dárků**:
-    - "Ježíšek" si dárek zarezervuje, aby ostatní věděli, že už je zabraný.
-    - Pro rezervaci je nutné přihlášení (aby se vědělo, kdo rezervoval).
-    - U Osobních seznamů majitel rezervaci nevidí.
-    - U Spravovaných seznamů majitel rezervaci vidí.
+## Main Features
 
-### 💰 Skupinové Dárky
-- Máte přání, které je dražší? Označte dárek jako **Skupinový**.
-- Ostatní uvidí, že se jedná o větší investici a mohou se domluvit na společném nákupu.
+- User registration and sign-in
+- Google OAuth sign-in
+- Personal wishlists
+- Managed wishlists
+- Public sharing by share link
+- Shared access between registered users
+- Gift reservation flow
+- Group gift suggestions and contribution messaging
+- AI gift suggestions powered by Gemini with a local fallback strategy
+- Responsive UI for desktop and mobile
 
-### 📱 Moderní a Responzivní
-- Aplikace je plně optimalizovaná pro **mobily, tablety i počítače**.
-- Nainstalujte si ji jako webovou aplikaci (PWA) přímo na plochu telefonu.
+## Architecture Overview
 
----
+### Frontend
 
-## 🛠️ Jak to funguje?
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
 
-### 1. Vytvořte seznam
-Přihlašte se a vytvořte nový seznam. Zvolte, zda je pro vás (Osobní) nebo pro někoho jiného (Spravovaný).
+### Backend and infrastructure
 
-### 2. Přidejte přání
-Naházejte do seznamu všechno, co by vám udělalo radost. Přidejte odkazy na e-shopy, ať to mají "Ježíšci" jednoduché.
+- Supabase self-hosted stack
+- PostgreSQL
+- Supabase Auth
+- Supabase REST
+- Supabase Realtime
+- Cloudflare Tunnel for public API exposure
+- Raspberry Pi as the self-hosted runtime
 
-### 3. Sdílejte
-V detailu seznamu klikněte na tlačítko sdílení nebo zkopírujte adresu v prohlížeči. Odkaz pošlete komukoliv.
+### Why this architecture exists
 
-### 4. Rezervace (pohled obdarovávajícího)
-Když někdo otevře váš odkaz, uvidí seznam dárků. U každého dárku je tlačítko "Rezervovat". Pokud na něj klikne, dárek se označí jako "Zarezervované" pro všechny ostatní návštěvníky, ale vy (pokud jde o Osobní seznam) nic nepoznáte.
+The original hosted Supabase free tier could pause the project after inactivity. The project was therefore migrated to a self-hosted Supabase stack on Raspberry Pi, while the frontend remained on Vercel for simple deployment and CDN delivery.
 
----
+## Repository Structure
 
-## 👨‍💻 Technologie
+```text
+src/
+  components/    Reusable UI components
+  config/        Client configuration such as Supabase
+  context/       React context providers
+  hooks/         Reusable hooks
+  pages/         Route-level pages
+  services/      Data and business logic services
+  types/         Shared TypeScript database and app types
+  utils/         Diagnostics and helper utilities
 
-Projekt je postaven na moderním stacku pro maximální rychlost a spolehlivost:
+docs/            Operations, migration and deployment documentation
+scripts/         Build helpers and Raspberry Pi import tools
+public/          Static assets
+```
 
-- **Frontend**: React, TypeScript, Vite
-- **Styling**: Tailwind CSS, DaisyUI
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
-- **Hosting**: Vercel
+## Environment Variables
 
-## 🚀 Instalace pro vývojáře
+### Required for frontend
 
-1.  **Klonování repozitáře**
-    ```bash
-    git clone <url-repozitare>
-    cd dareklist-app
-    ```
+```env
+VITE_SUPABASE_URL=https://api.example.com
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
+```
 
-2.  **Instalace závislostí**
-    ```bash
-    npm install
-    ```
+### Optional for AI suggestions
 
-3.  **Konfigurace prostředí**
-    Vytvořte `.env` soubor a nastavte Supabase klíče:
-    ```env
-    VITE_SUPABASE_URL=vas_url
-    VITE_SUPABASE_ANON_KEY=vas_klic
-    ```
+```env
+VITE_GEMINI_API_KEY=your-gemini-key
+```
 
-4.  **Spuštění**
-    ```bash
-    npm run dev
-    ```
+If `VITE_GEMINI_API_KEY` is missing, the app falls back to deterministic local suggestion logic instead of failing hard.
 
----
+## Local Development
 
-## 📝 Licence a Autor
+### 1. Install dependencies
 
-Vytvořil [Ivan Vondráček].
-Aplikace vznikla jako projekt pro usnadnění vánočního shonu. 🎄
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+Create `.env` from `.env.example` and fill in the variables.
+
+### 3. Start development server
+
+```bash
+npm run dev
+```
+
+### 4. Production build check
+
+```bash
+npm run build
+```
+
+## Deployment Summary
+
+### Frontend deployment
+
+- Deployed on Vercel
+- Uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+- Requires redeploy after environment variable changes
+
+### Backend deployment
+
+- Self-hosted Supabase stack on Raspberry Pi
+- Public API exposed through Cloudflare Tunnel
+- Auth callback configured for the Vercel frontend domain
+
+## Operations Notes
+
+- Supabase data was migrated from CSV exports
+- Storage is currently unused
+- Daily backups are configured on the Raspberry Pi
+- Public API traffic currently reaches Supabase through a local TCP forwarder used by the Cloudflare Tunnel route
+
+## Security Notes
+
+- No secrets should be committed to the repository
+- Frontend only uses the public anon key
+- Service-role and infrastructure secrets remain only on the Raspberry Pi
+- Database security relies on Supabase Auth and RLS policies
+
+## Documentation Map
+
+- [Deployment guide](./DEPLOYMENT.md)
+- [Group gifts overview](./GROUP_GIFTS_SETUP.md)
+- [Documentation index](./docs/README.md)
+- [Raspberry Pi migration guide](./docs/rpi-supabase-migration.md)
+- [OAuth and public access checklist](./docs/oauth-and-public-access-checklist.md)
+- [Operations guide](./docs/operations.md)
+
+## Useful Commands
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## Maintainer
+
+Ivan Vondracek
+

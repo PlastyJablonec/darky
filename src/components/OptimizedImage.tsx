@@ -118,9 +118,10 @@ export function OptimizedImage({
             src={imageUrl}
             sizes={sizes}
             alt={alt}
-            className={`absolute inset-0 w-full h-full object-${objectFit} transition-opacity duration-300 ${
+            className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
+            style={{ objectFit }}
             onLoad={handleLoad}
             onError={handleError}
             loading={lazy ? 'lazy' : 'eager'}

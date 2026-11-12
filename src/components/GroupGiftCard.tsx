@@ -166,9 +166,9 @@ export function GroupGiftCard({
           <OptimizedImage
             src={gift.image_url}
             alt={gift.title}
-            className="w-full h-40 sm:h-48 rounded-t-lg"
+            className="w-full h-56 sm:h-64 rounded-t-lg bg-gray-50"
             aspectRatio={1.5}
-            objectFit="cover"
+            objectFit="contain"
             clickable={true}
           />
           {gift.is_reserved && !isOwner && (
