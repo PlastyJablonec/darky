@@ -17,6 +17,7 @@ interface SharedWishlist {
   viewed_at: string | null
   first_viewed_at: string | null
   created_at: string
+  new_gift_count: number
   wishlists: {
     id: string
     title: string
@@ -239,6 +240,11 @@ export function SharedWithMe() {
                   </Link>
                 </div>
 
+                {shared.new_gift_count > 0 && (
+                  <div className="mt-2 px-3 py-1 bg-amber-100 text-amber-900 text-sm font-medium rounded-full inline-flex" role="status">
+                    Nové dárky: {shared.new_gift_count}
+                  </div>
+                )}
                 {!shared.first_viewed_at && (
                   <div className="mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full inline-flex items-center">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>

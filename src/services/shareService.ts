@@ -60,7 +60,7 @@ export class ShareService {
   }
 
   // Aktualizace kdy uživatel poprvé/naposledy viděl sdílený seznam
-  static async updateShareView(wishlistId: string, viewerId: string) {
+  static async updateShareView(wishlistId: string, viewerId: string, viewedAt = new Date().toISOString()) {
     try {
       // Najít existující share záznam
       const { data: existingShare, error: existingShareError } = await supabase
@@ -78,7 +78,7 @@ export class ShareService {
       if (existingShare) {
         // Aktualizovat existující záznam
         const updates: any = {
-          viewed_at: new Date().toISOString()
+          viewed_at: viewedAt
         }
 
         // Pokud je to první zobrazení, nastavit i first_viewed_at
@@ -104,7 +104,7 @@ export class ShareService {
 
         if (wishlist && wishlist.user_id !== viewerId) {
           // Přidat do "Sdíleno se mnou" pouze pokud to není vlastník
-          const now = new Date().toISOString()
+          const now = viewedAt
           const { error } = await supabase
             .from('wishlist_shares')
             .insert({
@@ -156,6 +156,13 @@ export class ShareService {
         return []
       }
 
+      // Only active gifts are relevant to the unread indicator.
+      const { data: giftDates, error: giftsError } = await supabase
+        .from('gifts')
+        .select('wishlist_id, created_at, is_received')
+        .in('wishlist_id', wishlistIds)
+      if (giftsError) console.error('Chyba při načítání nových dárků:', giftsError)
+
       // 4. Získat unikátní ID vlastníků
       const ownerIds = [...new Set(wishlists?.map(w => w.user_id) || [])]
 
@@ -183,6 +190,7 @@ export class ShareService {
 
         return {
           ...share,
+          new_gift_count: share.viewed_at ? (giftDates || []).filter(g => g.wishlist_id === share.wishlist_id && !g.is_received && new Date(g.created_at).getTime() > new Date(share.viewed_at!).getTime()).length : 0,
           wishlists: {
             ...wishlist,
             profile_dates: wishlist.type === 'managed' ? null : profileDates?.find(d => d.user_id === ownerId) || null,

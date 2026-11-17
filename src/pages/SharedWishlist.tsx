@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Gift, Heart } from 'lucide-react'
 import { GiftFilters } from '@/components/GiftFilters'
@@ -28,6 +28,9 @@ export function SharedWishlist() {
   const [gifts, setGifts] = useState<Gift[]>([])
   const [occasions, setOccasions] = useState<OccasionDates | null>(null)
   const filters = useGiftFilters(gifts)
+  const [lastViewedAt, setLastViewedAt] = useState<string | null>(null)
+  const [showOnlyNew, setShowOnlyNew] = useState(false)
+  const viewBaselines = useRef<Record<string, string | null>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +52,19 @@ export function SharedWishlist() {
 
         setWishlist(wishlistData)
 
+        // Capture the boundary before fetching gifts, so concurrent additions remain new next time.
+        const viewedAt = new Date().toISOString()
+        if (user && user.id !== wishlistData.user_id) {
+          const key = `${user.id}:${wishlistData.id}`
+          if (!(key in viewBaselines.current)) {
+            const { data: share, error: shareError } = await supabase.from('wishlist_shares')
+              .select('viewed_at').eq('wishlist_id', wishlistData.id).eq('shared_with', user.id).maybeSingle()
+            if (shareError) throw shareError
+            viewBaselines.current[key] = share?.viewed_at || null
+          }
+          setLastViewedAt(viewBaselines.current[key])
+        } else setLastViewedAt(null)
+
         // Načíst dárky
         const giftsData = await giftService.getWishlistGifts(wishlistData.id)
         setGifts(giftsData)
@@ -63,7 +79,7 @@ export function SharedWishlist() {
             setError('Nemáte oprávnění k zobrazení tohoto seznamu')
             return
           }
-          await ShareService.updateShareView(wishlistData.id, user.id)
+          await ShareService.updateShareView(wishlistData.id, user.id, viewedAt)
           if (wishlistData.type === 'managed') {
             try {
               const people = await managedPersonService.getMany([wishlistData.id])
@@ -109,7 +125,9 @@ export function SharedWishlist() {
     return () => { active = false; window.removeEventListener('focus', refresh); void supabase.removeChannel(channel) }
   }, [wishlist?.id])
 
-  const activeWishes = filters.filtered
+  const isNewGift = (gift: Gift) => Boolean(lastViewedAt && new Date(gift.created_at).getTime() > new Date(lastViewedAt).getTime())
+  const newGifts = filters.active.filter(isNewGift)
+  const activeWishes = showOnlyNew ? newGifts : filters.filtered
 
   const receivedGifts = gifts.filter(g => g.is_received)
 
@@ -271,7 +289,16 @@ export function SharedWishlist() {
             />
           )}
 
-          {filters.active.length > 0 && <GiftFilters filters={filters} showAvailability={user?.id !== wishlist.user_id || wishlist.type === 'managed'} />}
+          {newGifts.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex flex-wrap items-center justify-between gap-3" role="status">
+              <p className="text-amber-900">Od posledního otevření přibyly nové dárky: <strong>{newGifts.length}</strong>.</p>
+              <button type="button" className="btn-outline" onClick={() => setShowOnlyNew(value => !value)}>
+                {showOnlyNew ? 'Zobrazit všechny dárky' : 'Zobrazit nové dárky'}
+              </button>
+            </div>
+          )}
+
+          {!showOnlyNew && filters.active.length > 0 && <GiftFilters filters={filters} showAvailability={user?.id !== wishlist.user_id || wishlist.type === 'managed'} />}
 
           {gifts.length === 0 ? (
             <div className="text-center py-12">
@@ -290,14 +317,16 @@ export function SharedWishlist() {
           ) : (
             <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {activeWishes.map((gift) => (
-                <EnhancedGiftCard
-                  key={gift.id}
+                <div key={gift.id}>
+                  {isNewGift(gift) && <span className="inline-block mb-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-sm font-medium">Nový dárek</span>}
+                  <EnhancedGiftCard
                   gift={gift}
                   isOwner={user?.id === wishlist.user_id}
                   showReserved={wishlist.type === 'managed'}
                   onReserve={handleReserveGift}
                   onUnreserve={handleUnreserveGift}
-                />
+                  />
+                </div>
               ))}
             </div>
           )}
